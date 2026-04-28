@@ -77,6 +77,6 @@ We believe in "Don't Trust, Verify".
 ### Links
 * **Dapp & Dashboard:** [gblin.digital](https://gblin.digital)
 * **Farcaster:** [@gblin](https://warpcast.com/gblin)
-* **Telegram:** [GBLIN Project](https://t.me/gblinproject)
+* **X:** [GBLIN Project](https://x.com/GBLIN_Protocol)
 
 *Built by builders, for builders. Stay Based.* 🔵
