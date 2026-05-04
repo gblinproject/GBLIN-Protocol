@@ -27,7 +27,7 @@ audits/
 ## Public Verification
 
 - **BaseScan**: [`0x38DcDB3A381677239BBc652aed9811F2f8496345`](https://basescan.org/address/0x38DcDB3A381677239BBc652aed9811F2f8496345)
-- **Source**: [[contracts/GBLIN_V5.sol](cci:7://file:///c:/Users/Roby-Caro/Documents/GitHub/GBLIN_WEBAPP/contracts/GBLIN_V5.sol:0:0-0:0)](../contracts/GBLIN_V5.sol)
+- **Source**: [GBLIN.sol](../GBLIN.sol)
 
 ## Reporting Issues
 
