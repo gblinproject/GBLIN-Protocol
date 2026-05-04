@@ -707,17 +707,26 @@ Researchers acting in good faith will not face legal action and will be acknowle
 ## 14. Repository Structure
 
 ```
-gblin-protocol-spec/
-├── README.md                  # This document
-├── contracts/
-│   └── GBLIN_V5.sol           # Canonical source
-├── docs/
-│   ├── architecture.md        # Extended architecture notes
-│   ├── math.md                # Detailed formal proofs
-│   └── images/                # Diagrams
+GBLIN-Protocol/
+├── README.md                  # This document — V5 Technical Specification
+├── GBLIN.sol                  # Canonical contract source
+├── LICENSE                    # MIT
+├── SECURITY.md                # Security policy & responsible disclosure
+├── CONTRIBUTING.md            # Contribution guidelines
+├── CODE_OF_CONDUCT.md         # Contributor Covenant
+├── CHANGELOG.md               # Version history
+├── funding.json               # Funding metadata
 ├── audits/
 │   └── README.md              # Audit reports index
-└── LICENSE                    # MIT
+├── docs/
+│   ├── architecture.md        # Extended architecture notes
+│   ├── deployments.md         # Deployment addresses & infrastructure
+│   └── governance.md          # Governance model
+└── .github/
+    ├── PULL_REQUEST_TEMPLATE.md
+    └── ISSUE_TEMPLATE/
+        ├── bug_report.md
+        └── feature_request.md
 ```
 
 ---
