@@ -1,24 +1,30 @@
 # GBLIN V5 — Technical Specification
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Network: Base](https://img.shields.io/badge/Network-Base%20Mainnet-blue.svg)](https://basescan.org/)
+[![Network: Base](https://img.shields.io/badge/Network-Base%20Mainnet-blue.svg)](https://basescan.org/address/0x38DcDB3A381677239BBc652aed9811F2f8496345)
 [![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.20-363636.svg)](https://soliditylang.org/)
 [![Version](https://img.shields.io/badge/Version-V5-green.svg)](https://github.com/gblinproject/Whitepaper)
+[![Governance: 48h Timelock](https://img.shields.io/badge/Governance-48h%20Timelock-1f6feb.svg)](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd)
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-Live-9b59b6.svg)](https://registry.modelcontextprotocol.io/v0/servers?search=gblin)
+[![npm](https://img.shields.io/npm/v/@gblin-protocol/mcp-server.svg?label=@gblin-protocol/mcp-server)](https://www.npmjs.com/package/@gblin-protocol/mcp-server)
 [![Audit](https://img.shields.io/badge/Audit-Public-orange.svg)](#audit-status)
 
-> **Global Balanced Liquidity Index** — A fully collateralized, autonomously rebalanced, on-chain index of digital assets, deployed on Base Mainnet.
+> **Global Balanced Liquidity Index** — A fully collateralized, autonomously rebalanced, on-chain index of digital assets, deployed on Base Mainnet. Owned by a 48-hour Timelock Controller. Native AI-agent treasury via the Model Context Protocol.
 
 ---
 
 ## Abstract
 
-GBLIN is a non-custodial ERC-20 index token whose price is deterministically derived from a basket of underlying assets (cbBTC, WETH, USDC) held by the contract itself. Unlike algorithmic stablecoins or AMM-priced tokens, GBLIN's value is computed on-chain from oracle-verified Net Asset Value (NAV) at every interaction. The protocol introduces three innovations over traditional on-chain index funds:
+GBLIN is a non-custodial ERC-20 index token whose price is deterministically derived from a basket of underlying assets (cbBTC, WETH, USDC) held by the contract itself. Unlike algorithmic stablecoins or AMM-priced tokens, GBLIN's value is computed on-chain from oracle-verified Net Asset Value (NAV) at every interaction. The protocol introduces four innovations over traditional on-chain index funds:
 
 1. **Crash Shield** — an automatic, oracle-driven mechanism that reduces exposure to any basket asset undergoing a drawdown greater than 20% from its recent peak, redistributing weight to healthy stable assets.
 2. **Permissionless rebalancing** — any address can trigger a rebalance and earn a fixed reward (0.0001 ETH) from the protocol's stability fund, eliminating reliance on a centralized keeper.
 3. **In-Kind facility** — institutional-grade mint/redeem flows that bypass swap slippage by depositing/receiving the basket assets directly, mirroring the authorized-participant mechanism of traditional ETFs.
+4. **AI-agent native** — a first-class Model Context Protocol (MCP) server (`@gblin-protocol/mcp-server`) lets autonomous agents on Base hold treasury in GBLIN and Just-In-Time swap to USDC for x402 micropayments. Listed on the official Anthropic MCP Registry as `io.github.gblinproject/gblin-mcp-server` and natively compatible with Coinbase AgentKit's MCP extension.
 
-This document specifies the contract's mathematical model, function-level behavior, security assumptions, and historical case studies demonstrating capital protection during real market events.
+The contract is owned by a **48-hour OpenZeppelin Timelock Controller** with an immutable `MIN_DELAY`: every administrative action (parameter change, oracle update, ownership transfer) is enforced on-chain to wait 172,800 seconds before execution. This makes GBLIN one of the few index protocols on Base where admin power is verifiably delay-locked, eliminating the classic rug-then-attack vector.
+
+This document specifies the contract's mathematical model, function-level behavior, security assumptions, governance architecture, and historical case studies demonstrating capital protection during real market events.
 
 ---
 
@@ -27,6 +33,7 @@ This document specifies the contract's mathematical model, function-level behavi
 | Field | Value |
 |---|---|
 | **Contract address** | [`0x38DcDB3A381677239BBc652aed9811F2f8496345`](https://basescan.org/address/0x38DcDB3A381677239BBc652aed9811F2f8496345) |
+| **Owner (Timelock Controller)** | [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd) |
 | **Network** | Base Mainnet (chain ID 8453) |
 | **Version** | V5 |
 | **Compiler** | Solidity ^0.8.20 |
@@ -34,6 +41,7 @@ This document specifies the contract's mathematical model, function-level behavi
 | **License** | MIT |
 | **DEX integration** | Uniswap V3 (Base) |
 | **Oracles** | Chainlink price feeds + Base sequencer feed |
+| **MCP Server** | [`@gblin-protocol/mcp-server`](https://www.npmjs.com/package/@gblin-protocol/mcp-server) — `io.github.gblinproject/gblin-mcp-server` |
 
 ### Useful links
 
@@ -41,6 +49,10 @@ This document specifies the contract's mathematical model, function-level behavi
 - Whitepaper: [GBLIN_WHITE_PAPER_V5.pdf](https://github.com/gblinproject/Whitepaper/raw/main/GBLIN_WHITE_PAPER_V5.pdf)
 - Dune Analytics: [dune.com/gblin/dashboard](https://dune.com/gblin/dashboard)
 - Aerodrome V5 pool: [`0x7dcd...ae1b`](https://aerodrome.finance/)
+- **MCP Server (npm)**: [`@gblin-protocol/mcp-server`](https://www.npmjs.com/package/@gblin-protocol/mcp-server)
+- **MCP Registry listing**: [`io.github.gblinproject/gblin-mcp-server`](https://registry.modelcontextprotocol.io/v0/servers?search=gblin)
+- **MCP repo (AI-agent toolkit)**: [github.com/gblinproject/GBLIN-MCP](https://github.com/gblinproject/GBLIN-MCP)
+- **Timelock Controller (owner)**: [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd)
 - X / Twitter: [@GBLIN_Protocol](https://x.com/GBLIN_Protocol)
 - Farcaster: [@gblin](https://warpcast.com/gblin)
 - Email: info@gblin.digital
@@ -58,14 +70,15 @@ This document specifies the contract's mathematical model, function-level behavi
 7. [The Crash Shield: Mathematics of Protection](#7-the-crash-shield-mathematics-of-protection)
 8. [Historical Case Studies](#8-historical-case-studies)
 9. [In-Kind Facility (ETF-style Mint/Redeem)](#9-in-kind-facility-etf-style-mintredeem)
-10. [Complete Function Reference](#10-complete-function-reference)
-11. [Security and Defenses](#11-security-and-defenses)
-12. [Audit Status](#12-audit-status)
-13. [Bug Bounty & Responsible Disclosure](#13-bug-bounty--responsible-disclosure)
-14. [Repository Structure](#14-repository-structure)
-15. [Contributing](#15-contributing)
-16. [References & Further Reading](#16-references--further-reading)
-17. [Technical Glossary](#17-technical-glossary)
+10. [AI Agent Integration (Model Context Protocol)](#10-ai-agent-integration-model-context-protocol)
+11. [Complete Function Reference](#11-complete-function-reference)
+12. [Security and Defenses](#12-security-and-defenses)
+13. [Audit Status](#13-audit-status)
+14. [Bug Bounty & Responsible Disclosure](#14-bug-bounty--responsible-disclosure)
+15. [Repository Structure](#15-repository-structure)
+16. [Contributing](#16-contributing)
+17. [References & Further Reading](#17-references--further-reading)
+18. [Technical Glossary](#18-technical-glossary)
 
 ---
 
@@ -76,6 +89,8 @@ flowchart TB
     User([User / Wallet]) -->|ETH or ERC-20| Buy[buyGBLIN / mintInKind]
     User -->|GBLIN| Sell[sellGBLIN / redeemInKind]
     Keeper([Keeper / Bot]) -->|trigger| Rebal[incentivizedRebalance]
+    Agent([AI Agent via MCP]) -->|read NAV / calldata| Core
+    TL([48h Timelock Controller]) -->|admin actions, delay-locked| Core
 
     Buy --> Core{GBLIN Contract}
     Sell --> Core
@@ -95,7 +110,7 @@ flowchart TB
     Stab -.surplus → NAV.-> Holders([GBLIN Holders])
 ```
 
-The contract is the only custodian of basket assets. Every read (NAV, quotes) and every write (mint, burn, rebalance) is fully self-contained. There are no external admin keys able to move user funds, and ownership can be permanently renounced.
+The contract is the only custodian of basket assets. Every read (NAV, quotes) and every write (mint, burn, rebalance) is fully self-contained. There are no external admin keys able to move user funds: the sole admin role is the **48h Timelock Controller**, which can only execute parameter changes after a 172,800-second delay. Ownership can also be permanently renounced.
 
 ---
 
@@ -570,9 +585,76 @@ for (uint i = 0; i < basket.length; i++) {
 
 ---
 
-## 10. Complete Function Reference
+## 10. AI Agent Integration (Model Context Protocol)
 
-### 10.1 Buy functions
+GBLIN ships a first-class **MCP server** that turns the index into a treasury primitive for autonomous AI agents on Base. This is the only on-chain index protocol on Base mainnet listed on the official Anthropic MCP Registry.
+
+### What the MCP server is
+
+`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes 6 read-only or calldata-only tools. It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
+
+| Tool | Purpose |
+|---|---|
+| `get_treasury_state` | NAV in USD + basket composition + Crash Shield status |
+| `quote_safe_swap` | Preview buy/sell with dynamic slippage buffer (read-only) |
+| `swap_gblin_to_usdc_jit` | **Atomic GBLIN→USDC calldata for x402 invoice settlement** |
+| `invest_usdc_to_gblin` | Convert USDC earnings into GBLIN treasury (MEV-safe minOut) |
+| `analyze_treasury_health` | Balances + gas runway + rebalance recommendation |
+| `get_governance_state` | Verify owner == 48h Timelock + pending ops (trust gating) |
+
+### Why this matters for x402-paying agents
+
+Coinbase and Cloudflare's **x402** standard (HTTP 402 Payment Required) requires agents to settle USDC micropayments instantly. Holding 100% USDC means zero yield and full inflation exposure. Holding GBLIN means:
+
+1. **Diversified upside** — basket exposure to cbBTC/WETH/USDC with Crash Shield protection.
+2. **Just-In-Time settlement** — `swap_gblin_to_usdc_jit` returns ready-to-broadcast calldata that burns GBLIN, swaps the basket → WETH → USDC in a **single atomic transaction** via the contract's native `sellGBLINForToken`. No batched UserOps, no half-finished JIT.
+3. **MEV protection** — `minOut` is computed on-chain with a dynamic 2.5% / 4% slippage buffer (4% during Crash Shield).
+4. **Verifiable trust** — `get_governance_state` returns `owner_is_timelock: true` + `min_delay_seconds: 172800` so agents can gate trust-sensitive actions on whether admin is fully delay-enforced.
+
+### Quick install (Claude Desktop, Windsurf, Cursor)
+
+```json
+{
+  "mcpServers": {
+    "gblin": {
+      "command": "npx",
+      "args": ["-y", "@gblin-protocol/mcp-server"]
+    }
+  }
+}
+```
+
+### Coinbase AgentKit integration
+
+GBLIN is natively compatible with Coinbase's `@coinbase/agentkit-model-context-protocol` extension. Once added to the agent's MCP client, all 6 GBLIN tools sit alongside AgentKit's native wallet tools and can be called atomically from the same agent loop.
+
+```ts
+import { MCPClient } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+
+const transport = new StdioClientTransport({
+  command: "npx",
+  args: ["-y", "@gblin-protocol/mcp-server"],
+});
+const gblinClient = new MCPClient({ name: "agentkit-agent", version: "1.0.0" });
+await gblinClient.connect(transport);
+
+// JIT a $0.50 USDC payment for an x402 invoice
+const jit = await gblinClient.callTool({
+  name: "swap_gblin_to_usdc_jit",
+  arguments: { usdc_needed: "0.50", wallet_address: agentKitWallet.address },
+});
+```
+
+### Repository
+
+Full source, examples, and CI: [github.com/gblinproject/GBLIN-MCP](https://github.com/gblinproject/GBLIN-MCP)
+
+---
+
+## 11. Complete Function Reference
+
+### 11.1 Buy functions
 
 | Function | Description |
 |---|---|
@@ -580,60 +662,71 @@ for (uint i = 0; i < basket.length; i++) {
 | `buyGBLINWithToken(bytes path, uint256 amountIn, uint256 minWethOut, uint256 minGblinOut)` | Buy GBLIN with any ERC-20, routing the swap via Uniswap V3 with a custom `path`. |
 | `mintInKind(uint256 gblinTarget)` | Deposit the required amount of all basket assets and receive GBLIN. |
 
-### 10.2 Sell functions
+### 11.2 Sell functions
 
 | Function | Description |
 |---|---|
 | `sellGBLIN(uint256 gblinAmount)` | Burns GBLIN and returns proportional basket share (receiving native tokens). |
 | `sellGBLINForEth(uint256 gblinAmount, uint256 minEthOut)` | Burns GBLIN, internally swaps all assets to WETH, returns ETH. |
-| `sellGBLINForToken(uint256 gblinAmount, address targetToken, uint24 wethToTargetFee, uint256 minTokenOut)` | Burns GBLIN, converts everything to WETH, then swaps to arbitrary `targetToken`. |
+| `sellGBLINForToken(uint256 gblinAmount, address targetToken, uint24 wethToTargetFee, uint256 minTokenOut)` | Burns GBLIN, converts everything to WETH, then swaps to arbitrary `targetToken`. Used by the MCP `swap_gblin_to_usdc_jit` tool for x402 settlements. |
 | `redeemInKind(uint256 gblinAmount)` | Burns GBLIN and returns each basket asset without swap. |
 
-### 10.3 Rebalance functions
+### 11.3 Rebalance functions
 
 | Function | Description |
 |---|---|
 | `incentivizedRebalance(uint256 assetIndex, bool isWethToAsset, uint256 amountToSwap)` | Callable by anyone. Realigns asset to target weight. 0.0001 ETH reward. |
 | `refreshWeights()` | Recalculates `dynamicWeight` applying Crash Shield and redistribution. Public. |
 
-### 10.4 Yield functions
+### 11.4 Yield functions
 
 | Function | Description |
 |---|---|
 | `distributeYield()` | Public. Transfers Stability Fund surplus into NAV. Callable every 7 days. |
 | `getDynamicReserve()` | View. Returns current target reserve in WETH. |
 
-### 10.5 View (read-only) functions
+### 11.5 View (read-only) functions
 
 | Function | Output |
 |---|---|
 | `quoteBuyGBLIN(uint256 ethAmount)` | `(gblinOut, founderFee, stabilityFee)` — buy preview. |
 | `quoteSellGBLIN(uint256 gblinAmount)` | `ethOut` — full-WETH sell preview. |
 | `quoteMintInKind(uint256 gblinTarget)` | Array of required assets for in-kind mint. |
+| `owner()` | Current owner address (the 48h Timelock Controller). |
+| `proposedAsset()` | Pending asset addition (PendingAsset struct). |
 
-### 10.6 Governance (48h timelock, owner only for add/delist and oracles)
+### 11.6 Governance — dual-layer 48h delay
+
+GBLIN_V5 enforces administrative delay at **two independent layers**:
+
+1. **External owner = OpenZeppelin TimelockController** at [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd). Every `onlyOwner` call must first be scheduled on the timelock and wait `172,800 seconds` before execution. The `MIN_DELAY` is immutable; the `updateDelay` override permanently reverts.
+2. **Internal asset-addition timelock** = the `proposedAsset` mini-flow inside GBLIN_V5 itself, which adds a second 48h wait specifically for new basket assets (`TIMELOCK_DURATION = 48 hours`).
+
+Adding a new asset therefore requires **two queued 48h windows in series** before live execution.
 
 | Function | Auth | Description |
 |---|---|---|
-| `proposeAsset(...)` | `onlyOwner` | Proposes a new basket asset. Executable after 48h. |
-| `executeAssetAddition()` | `onlyOwner` | Adds the proposed asset (after timelock). |
-| `emergencyDelist(uint256 index)` | `onlyOwner` | Sets `baseWeight = 0` for an asset (immediate exit). |
-| `updateOracle(uint256 index, address newOracle)` | `onlyOwner` | Updates an asset's Chainlink oracle. |
-| `updateWethOracle(address)` | `onlyOwner` | Updates WETH oracle (NAV denominator). |
-| `updateMaxSlippage(uint256)` | `onlyOwner` | Modifies maximum slippage (capped at 10%). |
-| `updateReserveBounds(uint256 floor, uint256 ceiling)` | `onlyOwner` | Modifies dynamic reserve bounds. |
-| `updateFounderWallet(address)` | `onlyFounder` | Changes the wallet receiving creator fees. |
-| `transferOwnership(address)` | `onlyOwner` | Transfers ownership. |
-| `renounceOwnership()` | `onlyOwner` | **Permanently renounces** ownership (`ProtocolLockedForever` event). |
+| `proposeAsset(...)` | `onlyOwner` (timelock) | Proposes a new basket asset. Internal 48h wait starts. |
+| `executeAssetAddition()` | `onlyOwner` (timelock) | Adds the proposed asset (after both timelocks). |
+| `emergencyDelist(uint256 index)` | `onlyOwner` (timelock) | Sets `baseWeight = 0` for an asset. Still subject to timelock 48h. |
+| `updateOracle(uint256 index, address newOracle)` | `onlyOwner` (timelock) | Updates an asset's Chainlink oracle. |
+| `updateWethOracle(address)` | `onlyOwner` (timelock) | Updates WETH oracle (NAV denominator). |
+| `updateMaxSlippage(uint256)` | `onlyOwner` (timelock) | Modifies maximum slippage (capped at 10%). |
+| `updateReserveBounds(uint256 floor, uint256 ceiling)` | `onlyOwner` (timelock) | Modifies dynamic reserve bounds. |
+| `updateFounderWallet(address)` | `onlyFounder` | Changes the wallet receiving creator fees (not subject to timelock). |
+| `transferOwnership(address)` | `onlyOwner` (timelock) | Transfers ownership. Subject to timelock 48h. |
+| `renounceOwnership()` | `onlyOwner` (timelock) | **Permanently renounces** ownership (`ProtocolLockedForever` event). |
+
+Verifiable on-chain in one call via the MCP `get_governance_state` tool.
 
 ---
 
-## 11. Security and Defenses
+## 12. Security and Defenses
 
-### 11.1 Reentrancy Guard
+### 12.1 Reentrancy Guard
 All stateful external functions use `nonReentrant`.
 
-### 11.2 Sequencer Down Detection (Base L2)
+### 12.2 Sequencer Down Detection (Base L2)
 
 ```solidity
 function _checkSequencer() internal view {
@@ -644,7 +737,7 @@ function _checkSequencer() internal view {
 
 If the Base sequencer is down or restarted less than 1 hour ago, mint/redeem reverts.
 
-### 11.3 Anti-Sandwich Cooldown
+### 12.3 Anti-Sandwich Cooldown
 
 ```solidity
 if (block.timestamp < lastDepositTime[msg.sender] + 2 minutes) revert CooldownActive();
@@ -652,15 +745,15 @@ if (block.timestamp < lastDepositTime[msg.sender] + 2 minutes) revert CooldownAc
 
 Prevents flash-loan sandwich attacks.
 
-### 11.4 Anti-Drain Volume Floor
+### 12.4 Anti-Drain Volume Floor
 
 Rebalance requires minimum volume (1% of held WETH, never below 0.01 ETH) to prevent drain attacks via rewards.
 
-### 11.5 Oracle Timeout & Asset Amputation
+### 12.5 Oracle Timeout & Asset Amputation
 
 If an oracle has not updated for >24h or returns price ≤0, the asset is automatically "amputated" on the next `refreshWeights()`. NAV no longer considers it.
 
-### 11.6 Anti-Dilution NAV Snapshot
+### 12.6 Anti-Dilution NAV Snapshot
 
 ```solidity
 uint256 nav = _calculateNAV(exWeth);   // exclude incoming WETH
@@ -669,30 +762,44 @@ out = ((ethAmt - fF - sF) * 1 ether) / nav;
 
 Prevents the deposit itself from "diluting" the price it pays.
 
-### 11.7 Founder Fee Failsafe
+### 12.7 Founder Fee Failsafe
 
 If the ETH transfer to `founderWallet` fails, the amount is reconverted to WETH and added to the stability fund — **never lost**.
 
-### 11.8 Renouncing Ownership
+### 12.8 Renouncing Ownership
 
-The owner can permanently renounce ownership. After renouncement, all `onlyOwner` functions become permanently locked. The `ProtocolLockedForever` event records this on-chain.
+The owner (currently the Timelock Controller) can permanently renounce ownership. After renouncement, all `onlyOwner` functions become permanently locked. The `ProtocolLockedForever` event records this on-chain.
+
+### 12.9 48h Timelock Controller (admin delay enforcement)
+
+Ownership of GBLIN_V5 has been transferred to a deployed OpenZeppelin `TimelockController` at [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd). Properties enforced at the contract level:
+
+- **`MIN_DELAY` is immutable** — the `updateDelay` override permanently reverts, eliminating the rug-then-attack vector.
+- **`PROPOSER_ROLE` and `CANCELLER_ROLE` are strictly separated** — the constructor reverts if any address holds both, ensuring a malicious proposer cannot cancel community-friendly cancellations.
+- **`EXECUTOR_ROLE` is open** (`address(0)`) — anyone can execute a matured operation, anti-censorship.
+- **`DEFAULT_ADMIN_ROLE`** is held by the timelock itself — every role/config change must itself go through the 48h delay (self-administered).
+- **`GRACE_PERIOD` of 14 days** — pending operations expire if not executed in time (no zombie proposals).
+
+This means that even if proposer keys were compromised, an attacker still cannot drain or alter the protocol without giving the community a 48-hour public window to inspect the call, raise alarms, and trigger `cancel`.
 
 ---
 
-## 12. Audit Status
+## 13. Audit Status
 
 | Stage | Status |
 |---|---|
 | Internal review | ✅ Completed |
 | Public source verification (BaseScan) | ✅ Verified |
+| 48h Timelock Controller deployed and ownership transferred | ✅ Live (May 2026) |
+| MCP server published on npm + Anthropic Registry | ✅ Live (May 2026) |
 | External audit | 🟡 Open to community review |
 | Formal verification | 🔵 Roadmap |
 
-The contract source is **publicly verified on BaseScan** and open for inspection. Independent reviews and PRs are welcome (see [Contributing](#15-contributing)).
+The contract source is **publicly verified on BaseScan** and open for inspection. Independent reviews and PRs are welcome (see [Contributing](#16-contributing)).
 
 ---
 
-## 13. Bug Bounty & Responsible Disclosure
+## 14. Bug Bounty & Responsible Disclosure
 
 The GBLIN protocol welcomes responsible security research.
 
@@ -704,7 +811,7 @@ Researchers acting in good faith will not face legal action and will be acknowle
 
 ---
 
-## 14. Repository Structure
+## 15. Repository Structure
 
 ```
 GBLIN-Protocol/
@@ -729,20 +836,22 @@ GBLIN-Protocol/
         └── feature_request.md
 ```
 
+Companion repository: [`gblinproject/GBLIN-MCP`](https://github.com/gblinproject/GBLIN-MCP) — Model Context Protocol server (`@gblin-protocol/mcp-server`).
+
 ---
 
-## 15. Contributing
+## 16. Contributing
 
 Contributions are welcome. Please:
 
 1. Open an issue describing the change before submitting a PR.
 2. Sign commits with GPG when possible.
 3. For documentation fixes, submit a PR directly.
-4. For security disclosures, see [Bug Bounty](#13-bug-bounty--responsible-disclosure).
+4. For security disclosures, see [Bug Bounty](#14-bug-bounty--responsible-disclosure).
 
 ---
 
-## 16. References & Further Reading
+## 17. References & Further Reading
 
 1. GBLIN Whitepaper V5 — [PDF](https://github.com/gblinproject/Whitepaper/raw/main/GBLIN_WHITE_PAPER_V5.pdf)
 2. Adams, H. et al. *Uniswap V3 Core Whitepaper* (2021) — [uniswap.org](https://uniswap.org/whitepaper-v3.pdf)
@@ -751,10 +860,13 @@ Contributions are welcome. Please:
 5. OpenZeppelin Contracts — [github.com/OpenZeppelin](https://github.com/OpenZeppelin/openzeppelin-contracts)
 6. Base L2 Sequencer Feed — [docs.base.org](https://docs.base.org/)
 7. EIP-2612: ERC-20 Permit — [eips.ethereum.org/EIPS/eip-2612](https://eips.ethereum.org/EIPS/eip-2612)
+8. Model Context Protocol specification — [modelcontextprotocol.io](https://modelcontextprotocol.io)
+9. x402 payment standard — [x402.org](https://www.x402.org/) and [docs.cdp.coinbase.com/x402](https://docs.cdp.coinbase.com/x402/welcome)
+10. Coinbase AgentKit MCP extension — [`@coinbase/agentkit-model-context-protocol`](https://www.npmjs.com/package/@coinbase/agentkit-model-context-protocol)
 
 ---
 
-## 17. Technical Glossary
+## 18. Technical Glossary
 
 | Term | Meaning |
 |---|---|
@@ -769,6 +881,12 @@ Contributions are welcome. Please:
 | **Keeper** | Any address calling `incentivizedRebalance()` for the reward |
 | **Sequencer** | Base's L2 sequencer; if down, the contract freezes |
 | **TVL** | Total Value Locked — sum of all basket asset values in ETH |
+| **MCP** | Model Context Protocol — open standard for AI-agent tools, governed by Linux Foundation |
+| **MCP Registry** | The official Anthropic registry of MCP servers ([registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io)) |
+| **x402** | Open payment standard (HTTP 402 Payment Required), co-founded by Coinbase + Cloudflare under the Linux Foundation |
+| **JIT swap** | Just-In-Time atomic swap GBLIN→USDC, used by agents to settle x402 invoices in a single transaction |
+| **Timelock Controller** | OpenZeppelin contract that enforces a 48h delay on every admin action (current owner of GBLIN_V5) |
+| **MIN_DELAY** | The immutable 48h enforcement constant on the Timelock Controller |
 
 ---
 
@@ -777,9 +895,11 @@ Contributions are welcome. Please:
 This report is a technical descriptive document of the deployed contract code. It does not constitute financial advice. Holding GBLIN involves typical DeFi risks: code bugs, oracle failures, market risk on underlying assets, liquidity risk on Uniswap pools. Always verify the contract before interacting.
 
 **Verify the contract on BaseScan:** [`0x38DcDB3A381677239BBc652aed9811F2f8496345`](https://basescan.org/address/0x38DcDB3A381677239BBc652aed9811F2f8496345)
+**Verify the timelock owner:** [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd)
+**Verify the MCP listing:** [registry.modelcontextprotocol.io/v0/servers?search=gblin](https://registry.modelcontextprotocol.io/v0/servers?search=gblin)
 
 ---
 
-*Document version: 1.0 — May 2026*
+*Document version: 1.1 — May 2026*
 *Maintained by: GBLIN Protocol*
 *License: [MIT](./LICENSE)*
