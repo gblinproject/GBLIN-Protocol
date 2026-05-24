@@ -42,6 +42,7 @@ This document specifies the contract's mathematical model, function-level behavi
 | **DEX integration** | Uniswap V3 (Base) |
 | **Oracles** | Chainlink price feeds + Base sequencer feed |
 | **MCP Server** | [`@gblin-protocol/mcp-server`](https://www.npmjs.com/package/@gblin-protocol/mcp-server) — `io.github.gblinproject/gblin-mcp-server` |
+| **ElizaOS Plugin** | [`plugin-gblin`](https://www.npmjs.com/package/plugin-gblin) — community plugin for Eliza agents |
 
 ### Useful links
 
@@ -52,6 +53,8 @@ This document specifies the contract's mathematical model, function-level behavi
 - **MCP Server (npm)**: [`@gblin-protocol/mcp-server`](https://www.npmjs.com/package/@gblin-protocol/mcp-server)
 - **MCP Registry listing**: [`io.github.gblinproject/gblin-mcp-server`](https://registry.modelcontextprotocol.io/v0/servers?search=gblin)
 - **MCP repo (AI-agent toolkit)**: [github.com/gblinproject/GBLIN-MCP](https://github.com/gblinproject/GBLIN-MCP)
+- **ElizaOS plugin (npm)**: [`plugin-gblin`](https://www.npmjs.com/package/plugin-gblin)
+- **ElizaOS plugin repo**: [github.com/gblinproject/GBLIN_PLUGIN](https://github.com/gblinproject/GBLIN_PLUGIN)
 - **Timelock Controller (owner)**: [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd)
 - X / Twitter: [@GBLIN_Protocol](https://x.com/GBLIN_Protocol)
 - Farcaster: [@gblin](https://warpcast.com/gblin)
