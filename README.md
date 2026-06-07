@@ -594,7 +594,9 @@ GBLIN ships a first-class **MCP server** that turns the index into a treasury pr
 
 ### What the MCP server is
 
-`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes 6 read-only or calldata-only tools. It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
+`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **8 tools** — 6 free (read-only or calldata-only) and 2 paid via x402 micropayments. It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
+
+#### Free tools
 
 | Tool | Purpose |
 |---|---|
@@ -602,8 +604,15 @@ GBLIN ships a first-class **MCP server** that turns the index into a treasury pr
 | `quote_safe_swap` | Preview buy/sell with dynamic slippage buffer (read-only) |
 | `swap_gblin_to_usdc_jit` | **Atomic GBLIN→USDC calldata for x402 invoice settlement** |
 | `invest_usdc_to_gblin` | Convert USDC earnings into GBLIN treasury (MEV-safe minOut) |
-| `analyze_treasury_health` | Balances + gas runway + rebalance recommendation |
 | `get_governance_state` | Verify owner == 48h Timelock + pending ops (trust gating) |
+| `share_skill_with_peer` | Generate a portable skill seed to onboard a peer agent, with an embedded ERC-8021 Builder Code referral |
+
+#### Paid tools (x402 micropayments)
+
+| Tool | Price | Purpose |
+|---|---|---|
+| `analyze_treasury_health` | $0.003 USDC | Balances + gas runway + rebalance recommendation |
+| `find_keeper_bounty` | $0.001 USDC | **GBLIN pays you**: check for an available rebalance bounty (0.0001 ETH reward, only gas required) |
 
 ### Why this matters for x402-paying agents
 
@@ -629,7 +638,7 @@ Coinbase and Cloudflare's **x402** standard (HTTP 402 Payment Required) requires
 
 ### Coinbase AgentKit integration
 
-GBLIN is natively compatible with Coinbase's `@coinbase/agentkit-model-context-protocol` extension. Once added to the agent's MCP client, all 6 GBLIN tools sit alongside AgentKit's native wallet tools and can be called atomically from the same agent loop.
+GBLIN is natively compatible with Coinbase's `@coinbase/agentkit-model-context-protocol` extension. Once added to the agent's MCP client, all 8 GBLIN tools sit alongside AgentKit's native wallet tools and can be called atomically from the same agent loop.
 
 ```ts
 import { MCPClient } from "@modelcontextprotocol/sdk/client/index.js";
@@ -649,9 +658,54 @@ const jit = await gblinClient.callTool({
 });
 ```
 
-### Repository
+### ElizaOS plugin
 
-Full source, examples, and CI: [github.com/gblinproject/GBLIN-MCP](https://github.com/gblinproject/GBLIN-MCP)
+For agents running on **ElizaOS**, the companion package [`plugin-gblin`](https://www.npmjs.com/package/plugin-gblin) exposes three native Actions — `CHECK_GBLIN_TREASURY_HEALTH`, `INVEST_IDLE_USDC_GBLIN`, `RESCUE_USDC_FROM_GBLIN` — plus a Provider that injects live NAV + Crash Shield status into the agent context on every loop. Install with `npm install plugin-gblin` or `elizaos plugins add gblin`. Repo: [github.com/gblinproject/GBLIN_PLUGIN](https://github.com/gblinproject/GBLIN_PLUGIN).
+
+### Zero-config discovery (`gblin-init`)
+
+Running `npx -p @gblin-protocol/mcp-server gblin-init` drops an `AGENTS.md` treasury policy into a repository so any modern AI coding assistant (Claude Code, Cursor, Windsurf, GitHub Copilot, Codex) automatically discovers GBLIN when it works on that codebase. The command is idempotent and safe — it creates `AGENTS.md` from the canonical template if absent, or appends a clearly delimited GBLIN block without touching existing content. It runs offline via a bundled fallback template.
+
+### GBLIN Sentinel — autonomous x402 data agent (producer side)
+
+[GBLIN Sentinel](https://gblin-sentinel.vercel.app) is an open-source reference agent that closes the loop on the agent economy. Instead of *paying* for data (the consumer side covered by the MCP tools above), Sentinel *sells* real-time DeFi risk signals over x402 and reinvests the revenue into the GBLIN treasury. It is live proof that GBLIN works on both ends of agentic commerce: agents that earn, and agents that spend.
+
+| Endpoint | Price | Returns |
+|---|---|---|
+| `/api/data/base-risk-pulse` | $0.002 USDC | Chainlink risk signal (normal / caution / risk-off) for ETH, BTC, USDC, with price-staleness and USDC-depeg checks |
+| `/api/data/gblin-analytics` | $0.001 USDC | GBLIN protocol state: total supply, basket composition, stability fund, keeper availability |
+| `/api/data/keeper-opps` | $0.001 USDC | Live keeper-bounty check + MCP tool reference (earn 0.0001 ETH) |
+| `/api/data/risk-pulse-pro` | $0.01 USDC | **Premium**: risk signal + treasury analytics + one agent-actionable recommendation (invest / hold / reduce / defer) with confidence and suggested allocation % |
+
+Source: [github.com/gblinproject/gblin-sentinel](https://github.com/gblinproject/gblin-sentinel) · LLM reference: [llms.txt](https://gblin-sentinel.vercel.app/llms.txt) · Manifest: [/.well-known/x402](https://gblin-sentinel.vercel.app/.well-known/x402)
+
+### Machine-readable discovery & trust files
+
+GBLIN publishes discovery files so agents and protocols can find, integrate, and verify it without human intervention:
+
+- **x402 manifest** (paid endpoints, prices, chain id): [gblin.digital/.well-known/x402](https://gblin.digital/.well-known/x402)
+- **LLM discovery summary** (free, no paywall): [gblin.digital/api/x402/llms.txt](https://gblin.digital/api/x402/llms.txt)
+- **Agent quick start**: [gblin.digital/agents](https://gblin.digital/agents)
+- **Base MCP plugin** (official integration, in review): [PR #56 on base/skills](https://github.com/base/skills/pull/56)
+- **MCP Registry listing**: [`io.github.gblinproject/gblin-mcp-server`](https://registry.modelcontextprotocol.io/v0/servers?search=gblin)
+
+### Agent-to-agent propagation & keeper income
+
+Two ecosystem mechanisms make GBLIN spread and reward agents autonomously:
+
+- **Skill propagation** — the `share_skill_with_peer` tool lets one agent hand another a portable JSON "skill seed" (install instructions + working example + referral code). When the new agent transacts, an [ERC-8021](https://eips.ethereum.org/EIPS/eip-8021) Builder Code (`bc_gbdo32j0`) redirects a share of the existing protocol fee to the referrer — sourced from the fee split, never added on top.
+- **Keeper income** — the `find_keeper_bounty` tool / Sentinel's `keeper-opps` endpoint surface available rebalances. The caller earns **0.0001 ETH** from the stability fund using the contract's own capital, paying only gas (~$0.01 on Base). GBLIN is one of the few protocols that *pays* agents instead of charging them. Live leaderboard: [gblin.digital/keepers](https://gblin.digital/keepers).
+
+### Repositories
+
+| Repository | Purpose |
+|---|---|
+| [GBLIN-Protocol](https://github.com/gblinproject/GBLIN-Protocol) | Smart contract + this technical specification |
+| [GBLIN-MCP](https://github.com/gblinproject/GBLIN-MCP) | MCP server (`@gblin-protocol/mcp-server`) — the 8 agent tools |
+| [GBLIN_WEBAPP](https://github.com/gblinproject/GBLIN_WEBAPP) | Web app + x402 HTTP endpoints |
+| [GBLIN_PLUGIN](https://github.com/gblinproject/GBLIN_PLUGIN) | ElizaOS plugin (`plugin-gblin`) |
+| [gblin-sentinel](https://github.com/gblinproject/gblin-sentinel) | x402 data agent (producer-side reference) |
+| [Whitepaper](https://github.com/gblinproject/Whitepaper) | GBLIN Whitepaper V5 |
 
 ---
 
@@ -903,6 +957,6 @@ This report is a technical descriptive document of the deployed contract code. I
 
 ---
 
-*Document version: 1.1 — May 2026*
+*Document version: 1.2 — June 2026*
 *Maintained by: GBLIN Protocol*
 *License: [MIT](./LICENSE)*
