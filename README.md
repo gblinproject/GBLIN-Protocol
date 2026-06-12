@@ -43,6 +43,7 @@ This document specifies the contract's mathematical model, function-level behavi
 | **Oracles** | Chainlink price feeds + Base sequencer feed |
 | **MCP Server** | [`@gblin-protocol/mcp-server`](https://www.npmjs.com/package/@gblin-protocol/mcp-server) — `io.github.gblinproject/gblin-mcp-server` |
 | **ElizaOS Plugin** | [`plugin-gblin`](https://www.npmjs.com/package/plugin-gblin) — community plugin for Eliza agents |
+| **Aureus (autonomous trading agent)**: [gblin.digital/aureus](https://gblin.digital/aureus) — on-chain commit-reveal track record, dry-run validation |
 
 ### Useful links
 
@@ -679,6 +680,14 @@ Running `npx -p @gblin-protocol/mcp-server gblin-init` drops an `AGENTS.md` trea
 
 Source: [github.com/gblinproject/gblin-sentinel](https://github.com/gblinproject/gblin-sentinel) · LLM reference: [llms.txt](https://gblin-sentinel.vercel.app/llms.txt) · Manifest: [/.well-known/x402](https://gblin-sentinel.vercel.app/.well-known/x402)
 
+### GBLIN Aureus — autonomous trading agent (track-record side)
+
+[GBLIN Aureus](https://gblin.digital/aureus) is the third agent of the ecosystem: an autonomous catalyst & rotation agent that trades crypto, equities, indices and metals on Base venues. Its defining property is **verifiability**: every trading thesis is keccak-hashed and committed on-chain *before* the agent acts, then revealed at close — making the track record permanent and impossible to cherry-pick.
+
+Aureus runs a multi-layer risk engine (volatility-targeted sizing, liquidation-aware stops, mark-to-market drawdown auto-halt), a delta-neutral funding-carry strategy confirmed across multiple venues, and a multi-LLM consensus sentinel for news risk. It is currently in **dry-run validation** against a public gate (30–50 closed trades, profit factor > 1.3, max drawdown < 10%, zero liquidations) before any real capital is deployed.
+
+Aureus is also a planned consumer of the GBLIN treasury itself: idle capital parks in GBLIN via the MCP server and JIT-swaps to USDC when margin is needed — the protocol's own agents eating its own cooking. Live dashboard: [gblin.digital/aureus](https://gblin.digital/aureus).
+
 ### Machine-readable discovery & trust files
 
 GBLIN publishes discovery files so agents and protocols can find, integrate, and verify it without human intervention:
@@ -706,6 +715,7 @@ Two ecosystem mechanisms make GBLIN spread and reward agents autonomously:
 | [GBLIN_PLUGIN](https://github.com/gblinproject/GBLIN_PLUGIN) | ElizaOS plugin (`plugin-gblin`) |
 | [gblin-sentinel](https://github.com/gblinproject/gblin-sentinel) | x402 data agent (producer-side reference) |
 | [Whitepaper](https://github.com/gblinproject/Whitepaper) | GBLIN Whitepaper V5 |
+| [Aureus](https://gblin.digital/aureus) | Autonomous trading agent — on-chain commit-reveal track record (dry-run) |
 
 ---
 
@@ -944,6 +954,8 @@ Contributions are welcome. Please:
 | **JIT swap** | Just-In-Time atomic swap GBLIN→USDC, used by agents to settle x402 invoices in a single transaction |
 | **Timelock Controller** | OpenZeppelin contract that enforces a 48h delay on every admin action (current owner of GBLIN_V5) |
 | **MIN_DELAY** | The immutable 48h enforcement constant on the Timelock Controller |
+| **Commit-Reveal** | Scheme used by Aureus: the hash of a trading thesis is committed on-chain before execution and revealed at close, making the track record tamper-proof |
+| **Aureus** | The GBLIN autonomous trading agent — generates a verifiable on-chain track record (dry-run validation phase) |
 
 ---
 
