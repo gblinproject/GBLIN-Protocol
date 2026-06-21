@@ -2,16 +2,16 @@
 
 ## Base Mainnet
 
-### V5 (current)
+### V6 (current)
 
 | Field | Value |
 |---|---|
-| Address | [`0x38DcDB3A381677239BBc652aed9811F2f8496345`](https://basescan.org/address/0x38DcDB3A381677239BBc652aed9811F2f8496345) |
-| Deployment date | 2026-04-03 |
+| Address | [`0x36C81d7E1966310F305eA637e761Cf77F90852f0`](https://basescan.org/address/0x36C81d7E1966310F305eA637e761Cf77F90852f0) |
+| Deployment date | 2026-06 |
 | Deployer | (see BaseScan) |
 | Verified | ✅ |
-| Compiler | Solidity 0.8.20 |
-| Optimizer runs | 200 |
+| Compiler | Solidity 0.8.20 (viaIR) |
+| Optimizer | Enabled (low runs, viaIR) |
 
 ### Initial Basket
 
@@ -33,6 +33,7 @@
 
 | Version | Address | Status |
 |---|---|---|
+| V5 | `0x38DcDB3A381677239BBc652aed9811F2f8496345` | Superseded by V6 (2026-06); migration via web app |
 | V4 | `0xED334B4CDaFCAe6D42bb9A57DE565fD3e9640a50` | Deprecated 2026-04-03 |
 | V3 | — | Deprecated |
 | V2 | — | Deprecated |
@@ -46,6 +47,6 @@ To verify the bytecode matches the source:
 forge verify-contract \
   --chain base \
   --watch \
-  0x38DcDB3A381677239BBc652aed9811F2f8496345 \
-  contracts/GBLIN_V5.sol:GBLIN_GlobalBalancedLiquidityIndex
+  0x36C81d7E1966310F305eA637e761Cf77F90852f0 \
+  contracts/GBLIN_V6.sol:GBLIN_GlobalBalancedLiquidityIndex
 ```

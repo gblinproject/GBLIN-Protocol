@@ -26,7 +26,7 @@ audits/
 
 ## Public Verification
 
-- **BaseScan**: [`0x38DcDB3A381677239BBc652aed9811F2f8496345`](https://basescan.org/address/0x38DcDB3A381677239BBc652aed9811F2f8496345)
+- **BaseScan**: [`0x36C81d7E1966310F305eA637e761Cf77F90852f0`](https://basescan.org/address/0x36C81d7E1966310F305eA637e761Cf77F90852f0)
 - **Source**: [GBLIN.sol](../GBLIN.sol)
 
 ## Reporting Issues
