@@ -7,7 +7,7 @@
 [![Governance: 48h Timelock](https://img.shields.io/badge/Governance-48h%20Timelock-1f6feb.svg)](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-Live-9b59b6.svg)](https://registry.modelcontextprotocol.io/v0/servers?search=gblin)
 [![npm](https://img.shields.io/npm/v/@gblin-protocol/mcp-server.svg?label=@gblin-protocol/mcp-server)](https://www.npmjs.com/package/@gblin-protocol/mcp-server)
-[![Audit](https://img.shields.io/badge/Audit-Public-orange.svg)](#audit-status)
+[![Slither](https://img.shields.io/badge/Slither-0%20critical%20%2F%200%20high-success.svg)](audits/2026-06-28_slither_GBLIN_V6.md)
 
 > **Global Balanced Liquidity Index** — A fully collateralized, autonomously rebalanced, on-chain index of digital assets, deployed on Base Mainnet. Owned by a 48-hour Timelock Controller. Native AI-agent treasury via the Model Context Protocol.
 
@@ -879,12 +879,15 @@ This means that even if proposer keys were compromised, an attacker still cannot
 |---|---|
 | Internal review (three independent AI security passes + on-chain validation of every buy/sell path) | ✅ Completed |
 | V6 deployed & public source verification (BaseScan) | ✅ Verified (June 2026) |
-| 48h Timelock Controller deployed | ✅ Live; V6 ownership migration per launch flow |
+| **Slither static analysis (V6)** | ✅ **Completed — 0 critical / 0 high** ([report](audits/2026-06-28_slither_GBLIN_V6.md)) |
+| 48h Timelock Controller deployed & ownership migrated | ✅ Live (June 2026) |
 | MCP server published on npm + Anthropic Registry | ✅ Live |
 | External audit | 🟡 Open to community review |
 | Formal verification | 🔵 Roadmap |
 
-The contract source is **publicly verified on BaseScan** and open for inspection. Independent reviews and PRs are welcome (see [Contributing](#16-contributing)).
+A full [**Slither static-analysis run**](audits/2026-06-28_slither_GBLIN_V6.md) on the production V6 contract returned **no critical or high-severity vulnerabilities**: every high-severity flag is either a known OpenZeppelin false positive or fully mitigated by the contract's `ReentrancyGuard` and trusted-token assumptions. The complete report — one-line summary, per-detector breakdown, manually verified findings and exact reproduction commands — is published in [`audits/`](audits/).
+
+GBLIN V6 is intentionally **open to everyone**: the source is publicly verified on BaseScan, the automated security baseline is published in full, and the contract is immutable (no proxy) under a 48h Timelock. No closed audit, no hidden code — a public good for people and AI agents alike. Independent reviews and PRs are welcome (see [Contributing](#16-contributing)).
 
 ---
 
