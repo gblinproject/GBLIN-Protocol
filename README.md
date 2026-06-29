@@ -114,7 +114,7 @@ flowchart TB
     Stab -.surplus → NAV.-> Holders([GBLIN Holders])
 ```
 
-The contract is the only custodian of basket assets. Every read (NAV, quotes) and every write (mint, burn, rebalance) is fully self-contained. There are no external admin keys able to move user funds: the sole admin role is the **48h Timelock Controller**, which can only execute parameter changes after a 172,800-second delay. Ownership can also be permanently renounced.
+The contract is the only custodian of basket assets. Every read (NAV, quotes) and every write (mint, burn, rebalance) is fully self-contained. There are no external admin keys able to move user funds: the sole admin role is the **48h Timelock Controller**, which can only execute parameter changes after a 172,800-second delay. Ownership **cannot be renounced** — `renounceOwnership` was removed in V6 by design, so the protocol stays configurable (oracles, router, parameters) for the long term while remaining un-ruggable behind the timelock and immutable hard caps.
 
 ---
 
@@ -367,7 +367,7 @@ function incentivizedRebalance(uint256 assetIndex, bool isWethToAsset, uint256 a
 
 **Step-by-step flow:**
 
-1. **Minimum volume check** — prevents fund drain attacks:
+1. **Minimum volume gate** — a deliberately simple anti-drain floor (not the bounty): a rebalance must move at least `max(1% of the contract's WETH balance, 0.01 ETH)`, so the reserve can't be nibbled away by dust-sized no-op calls. This fixed floor is independent from — and complementary to — the **adaptive, volume-scaled bounty** described in step 6, which is what actually pays the keeper:
 
    ```solidity
    uint256 minSwapRequired = IWETH(WETH).balanceOf(address(this)) / 100;
@@ -859,7 +859,7 @@ If the ETH transfer to `founderWallet` fails, the amount is reconverted to WETH 
 
 V6 **removed `renounceOwnership`**. Trust does not come from discarding the keys — it comes from the **48h timelock** plus **immutable hard caps**: every governable parameter is bounded in code (fees ≤ 0.5%, slippage ≤ 20%, crash band 3–90%, bounty ≤ 2%, etc.), and the swap router / oracles remain re-pointable so the protocol can survive infrastructure deprecation for decades without ever being able to rug holders.
 
-### 12.9 48h Timelock Controller (admin delay enforcement)
+### 12.12 48h Timelock Controller (admin delay enforcement)
 
 Governance of GBLIN runs through a deployed OpenZeppelin `TimelockController` at [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd), to which V6 ownership is migrated as part of the launch flow. Properties enforced at the contract level:
 
@@ -965,9 +965,9 @@ Contributions are welcome. Please:
 | **NAV** | Net Asset Value — value in ETH of 1 GBLIN |
 | **BPS** | Basis Points — 1 BPS = 0.01% |
 | **Drawdown** | Percentage decline from recent peak |
-| **Crash Shield** | Automatic weight reduction on assets in >20% drawdown |
-| **Slash** | Cut of dynamic weight (to 20% of baseWeight) |
-| **Peak Decay** | Automatic reduction of recorded peak price (0.5%/day) |
+| **Crash Shield** | Dual-peak, volatility-adaptive weight reduction. Triggers above a base 15% drawdown (clamped 3–90%) measured against the worse of the fast and slow peaks, and scales **proportionally** with severity |
+| **Slash** | Proportional cut of dynamic weight, ramping from a light cut at trigger up to an 80% reduction at `fullSlashDrawdownBps` (45% drawdown), i.e. keeping `slashMultiplier` (20%) of `baseWeight` |
+| **Peak Decay** | Automatic reduction of recorded peak prices — fast peak 0.5%/day, slow structural peak 0.05%/day |
 | **In-Kind** | Mint/redeem with real assets instead of ETH |
 | **Stability Fund** | WETH reserve to pay keepers and cover shortfalls |
 | **Keeper** | Any address calling `incentivizedRebalance()` for the reward |
