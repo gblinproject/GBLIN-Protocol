@@ -603,7 +603,7 @@ GBLIN ships a first-class **MCP server** that turns the index into a treasury pr
 
 ### What the MCP server is
 
-`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **8 tools** — 6 free (read-only or calldata-only) and 2 paid via x402 micropayments. It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
+`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **9 tools** — 6 free (read-only or calldata-only) and 3 paid via x402 micropayments (incl. `get_market_risk_regime`, an on-chain BTC/ETH risk signal). It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
 
 #### Free tools
 
@@ -682,8 +682,8 @@ Running `npx -p @gblin-protocol/mcp-server gblin-init` drops an `AGENTS.md` trea
 | Endpoint | Price | Returns |
 |---|---|---|
 | `/api/data/base-risk-pulse` | $0.002 USDC | Chainlink risk signal (normal / caution / risk-off) for ETH, BTC, USDC, with price-staleness and USDC-depeg checks |
-| `/api/data/gblin-analytics` | $0.001 USDC | GBLIN protocol state: total supply, basket composition, stability fund, keeper availability |
-| `/api/data/keeper-opps` | $0.001 USDC | Live keeper-bounty check + MCP tool reference (earn an adaptive WETH bounty) |
+| `/api/data/gblin-analytics` | $0.002 USDC | GBLIN protocol state: total supply, basket composition, stability fund, keeper availability |
+| `/api/data/keeper-opps` | $0.002 USDC | Live keeper-bounty check + MCP tool reference (earn an adaptive WETH bounty) |
 | `/api/data/risk-pulse-pro` | $0.01 USDC | **Premium**: risk signal + treasury analytics + one agent-actionable recommendation (invest / hold / reduce / defer) with confidence and suggested allocation % |
 
 Source: [github.com/gblinproject/gblin-sentinel](https://github.com/gblinproject/gblin-sentinel) · LLM reference: [llms.txt](https://gblin-sentinel.vercel.app/llms.txt) · Manifest: [/.well-known/x402](https://gblin-sentinel.vercel.app/.well-known/x402)
