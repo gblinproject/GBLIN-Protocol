@@ -603,7 +603,7 @@ GBLIN ships a first-class **MCP server** that turns the index into a treasury pr
 
 ### What the MCP server is
 
-`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **9 tools** — 6 free (read-only or calldata-only) and 3 paid via x402 micropayments (incl. `get_market_risk_regime`, an on-chain BTC/ETH risk signal). It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
+`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **10 tools** — 7 free (read-only, calldata-only, and a free EIP-712 verifier for GBLIN Risk Attestations) and 3 paid via x402 micropayments (incl. `get_market_risk_regime`, an on-chain BTC/ETH risk signal). It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
 
 #### Free tools
 
