@@ -1,10 +1,12 @@
 # GBLIN Protocol — Architecture
 
+> **Nota di versione (2026-07):** questo documento è nato per la V5. La produzione è **V6** (`0x36C81d7E1966310F305eA637e761Cf77F90852f0`, owner = timelock 48h). Stessa architettura di fondo, con questi delta: Crash Shield adattivo dual-peak (trigger da ~15%, taglio proporzionale), fee split istantaneo al posto del drip settimanale, slippage interno adattivo 0.5–5.5% (non fisso 2%), bounty keeper adattiva (non fissa 0.0001 ETH), router/parametri settabili solo via timelock entro hard cap nel bytecode, uscita in-kind indipendente da oracoli/sequencer. Dettagli completi nel [README](../README.md) e nel [CHANGELOG](../CHANGELOG.md).
+
 This document expands on the high-level architecture summarized in the [main README](../README.md#1-protocol-architecture).
 
 ## Components
 
-### 1. Core Contract ([GBLIN_V5.sol](cci:7://file:///c:/Users/Roby-Caro/Documents/GitHub/GBLIN_WEBAPP/contracts/GBLIN_V5.sol:0:0-0:0))
+### 1. Core Contract ([GBLIN_V6.sol](../GBLIN_V6.sol))
 
 Single ERC-20 contract that:
 - Mints/burns GBLIN tokens.

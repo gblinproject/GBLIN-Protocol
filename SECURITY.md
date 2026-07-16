@@ -57,7 +57,8 @@ GBLIN Protocol is committed to running a bug bounty program. Researchers acting 
 
 | Version | Supported |
 |---|---|
-| V5 (current) | ✅ |
+| V6 (current — `0x36C81d7E1966310F305eA637e761Cf77F90852f0`) | ✅ |
+| V5 (deprecated 2026-06) | ❌ |
 | V4 | ❌ |
 | V3 | ❌ |
 

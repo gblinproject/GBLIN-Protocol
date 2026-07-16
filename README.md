@@ -17,12 +17,12 @@
 
 GBLIN is a non-custodial ERC-20 index token whose price is deterministically derived from a basket of underlying assets (cbBTC, WETH, USDC) held by the contract itself. Unlike algorithmic stablecoins or AMM-priced tokens, GBLIN's value is computed on-chain from oracle-verified Net Asset Value (NAV) at every interaction. V6 hardens every subsystem over V5 and introduces four innovations over traditional on-chain index funds:
 
-1. **Adaptive dual-peak Crash Shield** — an automatic, oracle-driven mechanism that measures drawdown against **both a fast peak (0.5%/day decay) and a slow structural peak (0.05%/day decay)**, catching sharp crashes *and* slow bleeds. Protection scales **proportionally** with severity from a 15% trigger up to an 80% weight cut at deep drawdown, redistributing weight to healthy stable assets.
+1. **Adaptive dual-peak Crash Shield** — an automatic, oracle-driven mechanism that measures drawdown against **both a fast peak (0.5%/day decay) and a slow structural peak (currently 0.15%/day decay)**, catching sharp crashes *and* slow bleeds. Protection scales **proportionally** with severity from a 15% trigger up to an 80% weight cut at deep drawdown, redistributing weight to healthy stable assets.
 2. **Permissionless rebalancing with adaptive bounty** — any address can trigger a rebalance and earn a **volume-scaled bounty** (bounded between `minBounty` and `maxBounty`, throttled by `bountyInterval`, paid only on a successful swap) from the protocol's stability fund, eliminating reliance on a centralized keeper while structurally bounding bounty spend.
 3. **In-Kind facility** — single-asset mint/redeem flows that bypass swap slippage by depositing/receiving basket assets directly (`buyGBLINInKind` / `sellGBLIN`), mirroring the authorized-participant mechanism of traditional ETFs.
 4. **AI-agent native** — a first-class Model Context Protocol (MCP) server (`@gblin-protocol/mcp-server`) lets autonomous agents on Base hold treasury in GBLIN and Just-In-Time swap to USDC for x402 micropayments. Listed on the official Anthropic MCP Registry as `io.github.gblinproject/gblin-mcp-server` and natively compatible with Coinbase AgentKit's MCP extension.
 
-V6 is **immutable but governed within a hard envelope**: every operational parameter is tunable by a **48-hour OpenZeppelin Timelock Controller**, but only inside immutable hard caps written in the code (fees never above 0.5%, slippage never above 20%, crash bounds 3–90%, etc.). Ownership **cannot be renounced** — `renounceOwnership` was removed by design so the protocol can adapt its oracle/router/parameter configuration for decades (e.g. repoint a deprecated DEX router) while remaining un-ruggable. Additional V6 hardening: adaptive internal slippage (Uniswap-style 0.5%–5.5% envelope driven by on-chain volatility), Chainlink `minAnswer`/`maxAnswer` floor-clamp validation, settable swap router and per-asset pool-fee, and a transaction-level anti-flash-loan defense backed by oracle-priced NAV plus a per-address cooldown.
+V6 is **immutable but governed within a hard envelope**: every operational parameter is tunable by a **48-hour OpenZeppelin Timelock Controller**, but only inside immutable hard caps written in the code (each fee never above 5%, slippage never above 20%, crash bounds 3–90%, etc.). Ownership **cannot be renounced** — `renounceOwnership` was removed by design so the protocol can adapt its oracle/router/parameter configuration for decades (e.g. repoint a deprecated DEX router) while remaining un-ruggable. Additional V6 hardening: adaptive internal slippage (Uniswap-style 0.5%–5.5% envelope driven by on-chain volatility), Chainlink `minAnswer`/`maxAnswer` floor-clamp validation, settable swap router and per-asset pool-fee, and a transaction-level anti-flash-loan defense backed by oracle-priced NAV plus a per-address cooldown.
 
 This document specifies the contract's mathematical model, function-level behavior, security assumptions, governance architecture, and historical case studies demonstrating capital protection during real market events.
 
@@ -50,7 +50,8 @@ This document specifies the contract's mathematical model, function-level behavi
 - Website: [gblin.digital](https://gblin.digital)
 - Whitepaper: [GBLIN_WHITE_PAPER_V5.pdf](https://github.com/gblinproject/Whitepaper/raw/main/GBLIN_WHITE_PAPER_V5.pdf)
 - Dune Analytics: [dune.com/gblin/dashboard](https://dune.com/gblin/dashboard)
-- Aerodrome V5 pool: [`0x7dcd...ae1b`](https://aerodrome.finance/)
+- Aerodrome pool (V6): [`0x6Ac1...FFbb`](https://dexscreener.com/base/0x6ac18d5e90278d2477027b5769efb2ff0711ffbb)
+- Uniswap V3 pool (V6): [`0xAb30...9dAE`](https://dexscreener.com/base/0xab305c45f4e42a73909a49a6775e3f7782239dae)
 - **MCP Server (npm)**: [`@gblin-protocol/mcp-server`](https://www.npmjs.com/package/@gblin-protocol/mcp-server)
 - **MCP Registry listing**: [`io.github.gblinproject/gblin-mcp-server`](https://registry.modelcontextprotocol.io/v0/servers?search=gblin)
 - **MCP repo (AI-agent toolkit)**: [github.com/gblinproject/GBLIN-MCP](https://github.com/gblinproject/GBLIN-MCP)
@@ -154,12 +155,12 @@ uint256 public maxOracleDeviationBps = 2500;  // max deviation when re-pointing 
 founderFeeBps          = 5       // 0.05% to creator
 stabilityFeeBps        = 5       // 0.05% to keeper reserve / NAV
 minDeposit             = 0       // no minimum buy (gas is the floor)
-oracleTimeout          = 86400   // 24h Chainlink staleness window
+oracleTimeout          = 86400   // 24h staleness window — update to 90000 (25h) scheduled via timelock 2026-07-16, executable 2026-07-18
 baseCrashThresholdBps  = 1500    // 15% crash trigger (adaptive with volatility)
-fullSlashDrawdownBps   = 4500    // 45% drawdown => maximum cut
+fullSlashDrawdownBps   = 3000    // 30% drawdown => maximum cut (set 2026-06-24 via setShieldCurve; contract default 4500)
 slashMultiplier        = 2000    // keep 20% of weight at full cut (cut up to 80%)
 peakDecayPerDayBps     = 50      // fast peak decay 0.5%/day
-slowPeakDecayPerDayBps = 5       // slow structural peak decay 0.05%/day
+slowPeakDecayPerDayBps = 15      // slow structural peak decay 0.15%/day (set 2026-06-24; contract default 5)
 sellCooldown           = 20 sec  // anti-flash-loan cooldown after a buy
 diversifyOnBuyThreshold= 0.0005 ether
 ```
@@ -167,7 +168,7 @@ diversifyOnBuyThreshold= 0.0005 ether
 ### Immutable hard caps (governance can NEVER exceed these)
 
 ```solidity
-HARD_MAX_FEE_BPS       = 500     // fees never above 0.5%
+HARD_MAX_FEE_BPS       = 500     // each fee never above 5% (500 bps)
 HARD_MAX_SLIPPAGE_BPS  = 2000    // slippage never above 20%
 HARD_MIN_CRASH_BPS     = 300     // crash trigger floor 3%
 HARD_MAX_CRASH_BPS     = 9000    // crash trigger ceiling 90%
@@ -244,15 +245,14 @@ function _calculateNAV(uint256 excludeWeth) internal view returns (uint256) {
 function _calculateTotalEthValue(uint256 excludeWeth) internal view returns (uint256) {
     uint256 wethBal = IWETH(WETH).balanceOf(address(this));
     wethBal = wethBal > excludeWeth ? wethBal - excludeWeth : 0;
-    uint256 totalEthVal = wethBal > stabilityFund ? wethBal - stabilityFund : 0;
-
+    uint256 total = wethBal > stabilityFund ? wethBal - stabilityFund : 0;
     for (uint i = 0; i < basket.length; i++) {
-        if (basket[i].token != WETH && basket[i].dynamicWeight > 0) {
+        if (basket[i].token != WETH) {
             uint256 bal = IERC20(basket[i].token).balanceOf(address(this));
-            if (bal > 0) totalEthVal += _convertToEth(basket[i], bal);
+            if (bal > 0) total += _convertToEth(basket[i], bal);
         }
     }
-    return totalEthVal;
+    return total;
 }
 ```
 
@@ -296,8 +296,8 @@ Every GBLIN purchase pays **0.10%** total, split into:
 
 | Fee | Default | Hard cap | Destination |
 |---|---|---|---|
-| `founderFeeBps` | 5 BPS (0.05%) | ≤ `HARD_MAX_FEE_BPS` (0.5%) | Creator wallet (leaves the contract) |
-| `stabilityFeeBps` | 5 BPS (0.05%) | ≤ `HARD_MAX_FEE_BPS` (0.5%) | Split between keeper reserve (`stabilityFund`) and NAV |
+| `founderFeeBps` | 5 BPS (0.05%) | ≤ `HARD_MAX_FEE_BPS` (5%) | Creator wallet (leaves the contract) |
+| `stabilityFeeBps` | 5 BPS (0.05%) | ≤ `HARD_MAX_FEE_BPS` (5%) | Split between keeper reserve (`stabilityFund`) and NAV |
 
 Both rates are governance-settable via `setFees(...)` but can **never** exceed the immutable `HARD_MAX_FEE_BPS` cap.
 
@@ -430,7 +430,7 @@ This is the mechanism that distinguishes GBLIN from simple peer-to-peer indexes.
 
 V6 replaces V5's single binary trigger with three combined upgrades:
 
-**1. Dual-peak drawdown.** Each asset tracks **two** peaks: a **fast peak** (`peakPrice`, decays 0.5%/day) that catches sharp crashes, and a **slow structural peak** (`slowPeak`, decays 0.05%/day) that catches long, grinding bleeds the fast peak would "forget". Drawdown is measured against the **worse of the two**:
+**1. Dual-peak drawdown.** Each asset tracks **two** peaks: a **fast peak** (`peakPrice`, decays 0.5%/day) that catches sharp crashes, and a **slow structural peak** (`slowPeak`, currently decays 0.15%/day) that catches long, grinding bleeds the fast peak would "forget". Drawdown is measured against the **worse of the two**:
 
 $$
 \text{drawdown} = \max\!\left(\frac{\text{peak} - p}{\text{peak}},\ \frac{\text{slowPeak} - p}{\text{slowPeak}}\right)
@@ -438,7 +438,7 @@ $$
 
 **2. Volatility-adaptive trigger.** The activation threshold starts at `baseCrashThresholdBps` (15%) and widens for assets that are intrinsically volatile (so a normally-jumpy asset is not slashed on routine noise), clamped inside the immutable `HARD_MIN_CRASH_BPS`..`HARD_MAX_CRASH_BPS` band (3%–90%).
 
-**3. Proportional slash.** Instead of an all-or-nothing cut, protection **scales with severity**: at the trigger the cut is light; at `fullSlashDrawdownBps` (45% drawdown) the cut reaches its maximum, leaving `slashMultiplier` (20%) of `baseWeight` — i.e. up to an **80% reduction**.
+**3. Proportional slash.** Instead of an all-or-nothing cut, protection **scales with severity**: at the trigger the cut is light; at `fullSlashDrawdownBps` (currently 30% drawdown; contract default 45%) the cut reaches its maximum, leaving `slashMultiplier` (20%) of `baseWeight` — i.e. up to an **80% reduction**.
 
 ```solidity
 uint256 drawdown = _worseDrawdown(a, currentPrice);     // dual-peak
@@ -475,7 +475,7 @@ if (totalSlashedWeight > 0) {
 
 ### Peak decay (two speeds)
 
-To prevent historical peaks from "trapping" an asset in permanent alert, both peaks decay over time — the fast peak at `peakDecayPerDayBps` (**0.5%/day**) and the slow structural peak at `slowPeakDecayPerDayBps` (**0.05%/day**, ~10× slower):
+To prevent historical peaks from "trapping" an asset in permanent alert, both peaks decay over time — the fast peak at `peakDecayPerDayBps` (**0.5%/day**) and the slow structural peak at `slowPeakDecayPerDayBps` (**0.15%/day** since the 2026-06-24 tuning; contract default 0.05%/day):
 
 ```solidity
 uint256 daysPassed = (block.timestamp - a.lastPeakUpdate) / 86400;
@@ -603,7 +603,7 @@ GBLIN ships a first-class **MCP server** that turns the index into a treasury pr
 
 ### What the MCP server is
 
-`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **10 tools** — 7 free (read-only, calldata-only, and a free EIP-712 verifier for GBLIN Risk Attestations) and 3 paid via x402 micropayments (incl. `get_market_risk_regime`, an on-chain BTC/ETH risk signal). It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
+`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **10 tools**, all free by default since v0.2.2 (read-only, calldata-only, incl. `get_market_risk_regime` and a free EIP-712 verifier for GBLIN Risk Attestations). Verifiable x402 payments live on the HTTP endpoints at `gblin.digital/api/x402/*` and the GBLIN Sentinel. It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
 
 #### Free tools
 
@@ -780,7 +780,7 @@ Adding a new asset therefore requires **two queued 48h windows in series**. Cruc
 | `proposeAsset(...)` | `onlyOwner` (timelock) | Proposes a new basket asset. Internal 48h wait starts. |
 | `executeAssetAddition()` | `onlyOwner` (timelock) | Adds the proposed asset (after both timelocks). |
 | `emergencyDelist(uint256 index)` | `onlyOwner` (timelock) | Sets `baseWeight = 0` for an asset, refreshing weights so NAV stays correct. |
-| `setFees(uint256 founderBps, uint256 stabilityBps)` | `onlyOwner` (timelock) | Adjust fee split. Capped at `HARD_MAX_FEE_BPS` (0.5%). |
+| `setFees(uint256 founderBps, uint256 stabilityBps)` | `onlyOwner` (timelock) | Adjust fee split. Capped at `HARD_MAX_FEE_BPS` (5% per fee). |
 | `setSlippage(uint256)` / `setMinSlippage(uint256)` | `onlyOwner` (timelock) | Adjust the adaptive slippage ceiling/floor. Capped at `HARD_MAX_SLIPPAGE_BPS` (20%). |
 | `setCrashParams(...)` / `setShieldCurve(...)` / `setPeakDecay(...)` | `onlyOwner` (timelock) | Tune crash trigger, full-slash drawdown, slash depth and the two peak-decay speeds, within `HARD_MIN/MAX_CRASH_BPS`. |
 | `setIncentive(...)` / `setBountyInterval(...)` | `onlyOwner` (timelock) | Tune the keeper bounty rate/bounds and throttle. Rate capped at `HARD_MAX_INCENTIVE_BPS` (2%). |
@@ -908,7 +908,8 @@ Researchers acting in good faith will not face legal action and will be acknowle
 ```
 GBLIN-Protocol/
 ├── README.md                  # This document — V6 Technical Specification
-├── GBLIN.sol                  # Canonical contract source
+├── GBLIN_V6.sol               # Canonical contract source (production)
+├── GBLIN_V5.sol               # Previous version (deprecated)
 ├── LICENSE                    # MIT
 ├── SECURITY.md                # Security policy & responsible disclosure
 ├── CONTRIBUTING.md            # Contribution guidelines

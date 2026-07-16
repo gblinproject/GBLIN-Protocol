@@ -27,7 +27,9 @@
 |---|---|
 | Uniswap V3 Router | `0x2626664c2603336E57B271c5C0b26F421741e481` |
 | Base L2 Sequencer Feed | `0xBCF85224fc0756B9Fa45aA7892530B47e10b6433` |
-| Aerodrome V5 Pool | `0x7dcd4f5bcdae0546c84dab54401a93ad6e92ae1b` |
+| Aerodrome Pool (V6) | `0x6Ac18D5e90278D2477027B5769EFb2fF0711FFbB` |
+| Uniswap V3 Pool (V6) | `0xAb305c45F4E42A73909a49a6775e3f7782239dAE` |
+| Aerodrome Pool V5 (deprecated) | `0x7dcd4f5bcdae0546c84dab54401a93ad6e92ae1b` |
 
 ## Deprecated Versions
 
