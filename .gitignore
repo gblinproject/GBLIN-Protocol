@@ -1,0 +1,23 @@
+# Dipendenze
+node_modules/
+
+# Ambiente e segreti — non devono MAI finire su GitHub
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build e temporanei
+dist/
+build/
+*.log
+*.bak
+*.bak.*
+*.tmp
