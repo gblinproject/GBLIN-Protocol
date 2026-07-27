@@ -5,6 +5,11 @@ All notable changes to the GBLIN Protocol will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Challenge] — 2026-07-27
+
+### Changed
+- "Beat Our Shield" Season 1 deadline extended from 2026-08-01 to **2026-09-30** (announced 2026-07-27, before the original close). Scoring rules, allowed bounds and the robustness criterion are unchanged.
+
 ## [V6] — 2026-06 — Production
 Contract: `0x36C81d7E1966310F305eA637e761Cf77F90852f0` (Base) · Owner: `GblinTimelockController` 48h `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`
 

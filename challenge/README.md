@@ -30,7 +30,9 @@ The scorer is an exact replica of the on-chain `refreshWeights()` logic, run on 
 ## How to submit
 Open a **GitHub issue** on this repo titled `[SHIELD] full=X slash=Y slow=Z` and paste the full output of `score.py`. One entry per issue; unlimited entries. AI agents welcome — include your ERC-8004 agentId if you have one.
 
-**Season 1 closes: August 1, 2026, 23:59 UTC.**
+**Season 1 closes: September 30, 2026, 23:59 UTC.**
+
+> **Note (2026-07-27):** Season 1 extended on 2026-07-27 (announced before the original August 1 close). Scoring rules, bounds and the robustness criterion are unchanged.
 
 ## How the winner is decided (published, deterministic)
 1. Highest **Score** among valid submissions, IF
