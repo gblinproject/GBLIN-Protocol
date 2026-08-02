@@ -897,7 +897,8 @@ The GBLIN protocol welcomes responsible security research.
 
 - **Critical bugs** (loss of user funds, contract takeover): contact `info@gblin.digital` with PoC.
 - **High-severity bugs** (DoS, oracle manipulation): same channel, encrypted disclosure preferred.
-- **Disclosure window**: 30 days before public disclosure.
+- **Disclosure window**: up to 90 days before public disclosure, negotiable — see [`SECURITY.md`](SECURITY.md) for the full timeline.
+- **Already-reported findings**: see [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md) before writing up.
 
 Researchers acting in good faith will not face legal action and will be acknowledged in the next protocol update.
 
