@@ -912,6 +912,7 @@ GBLIN-Protocol/
 ├── GBLIN_V5.sol               # Previous version (deprecated)
 ├── LICENSE                    # MIT
 ├── SECURITY.md                # Security policy & responsible disclosure
+├── KNOWN_ISSUES.md            # Findings reported so far, verified status of each
 ├── CONTRIBUTING.md            # Contribution guidelines
 ├── CODE_OF_CONDUCT.md         # Contributor Covenant
 ├── CHANGELOG.md               # Version history

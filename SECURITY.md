@@ -48,7 +48,8 @@ GBLIN Protocol is committed to running a bug bounty program. Researchers acting 
 
 ## Out of Scope
 
-- Issues already reported.
+- Issues already reported. **See [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md)** for the full list of findings
+  reported so far, what we verified, and where each one stands — please check it before writing up.
 - Vulnerabilities in dependencies (OpenZeppelin, Chainlink, Uniswap V3) — please report directly to those maintainers.
 - Issues requiring physical access to a user's device.
 - Social engineering attacks.

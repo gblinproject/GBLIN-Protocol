@@ -48,7 +48,6 @@ These are best-practice improvements only — **no action is required or possibl
 - Apply strict checks-effects-interactions in `_mintGBLIN` / `incentivizedRebalance` (write state before external calls) as defense-in-depth, even though `nonReentrant` already covers it.
 - Scale before dividing in `_convertToEth` / `_convertEthToAsset` to shave residual precision loss.
 - Use `SafeERC20` for the in-kind transfer in `sellGBLIN` for consistency with the rest of the contract.
-
 ## How to reproduce
 
 ```bash

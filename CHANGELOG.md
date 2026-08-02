@@ -5,6 +5,16 @@ All notable changes to the GBLIN Protocol will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — planned for the next contract migration
+
+### Security
+- `sellGBLINForEth` will skip a basket leg it cannot price instead of dispatching the swap with
+  `amountOutMinimum = 0`, mirroring the guard `_mintGBLIN` already applies. Reported externally on
+  2026-07-31 with a Foundry proof of concept and reproduced in full on 2026-08-01. No action is possible on
+  the live contract, which is immutable and owned by the 48h timelock; the staleness window `oracleTimeout`
+  (governance-settable up to 7 days, currently 25h since 2026-07-18) governs how often the triggering state
+  can arise via the staleness path.
+
 ## [Challenge] — 2026-07-27
 
 ### Changed
