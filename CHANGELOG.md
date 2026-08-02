@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the live contract, which is immutable and owned by the 48h timelock; the staleness window `oracleTimeout`
   (governance-settable up to 7 days, currently 25h since 2026-07-18) governs how often the triggering state
   can arise via the staleness path.
+- The sell cooldown will stop depending on the caller's identity. Today `_initRedeem` gates on
+  `lastDepositTime[msg.sender]` while every mint stamps its own caller, so minting and redeeming from two
+  addresses bypasses the gate entirely — including, without any intent, for anyone who receives tokens
+  through an aggregator. Found internally on 2026-08-02 and demonstrated with a 6-test proof of concept.
+  Raising `sellCooldown` through the timelock does not help, because the gate is bypassed rather than
+  outrun. See `KNOWN_ISSUES.md` §6, which also records that the atomic round trip costs 0.084% in fees and
+  was not shown to be profitable on its own.
 
 ## [Challenge] — 2026-07-27
 

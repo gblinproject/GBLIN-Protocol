@@ -38,13 +38,23 @@ The GBLIN Protocol team takes security issues seriously. We appreciate your effo
 | **Medium** | Temporary DoS, NAV miscalculation under specific conditions |
 | **Low** | Gas inefficiencies, missing event emissions, minor logic bugs |
 
-## Bug Bounty
+## Recognition and rewards
 
-GBLIN Protocol is committed to running a bug bounty program. Researchers acting in good faith will:
+**There is no monetary bug bounty at present, and we would rather say so plainly than leave the question
+open.** The protocol holds roughly one thousand dollars of total value and is self-funded; a reward pool
+would have to come out of the same money that pays for an external audit, which we consider the higher
+priority.
+
+Researchers acting in good faith will:
 
 - Not face legal action.
-- Be acknowledged in protocol release notes.
-- Be eligible for monetary rewards (program details forthcoming).
+- Be credited by name, or by handle if preferred, in `KNOWN_ISSUES.md` and in the release notes of any
+  change that results from the report — whether or not we agree with the reported severity.
+- Have their finding recorded even when we dispute it, with our reasoning published alongside, so that
+  disagreements are visible rather than buried in a private thread.
+
+If external funding arrives, a monetary program is the second item it pays for, after an external audit,
+and this section will be updated before any such program is announced anywhere else.
 
 ## Out of Scope
 

@@ -25,6 +25,7 @@ Last updated: 2026-08-02.
 | 3 | 2026-07-23 | `buyGBLINInKind` does not collect the stability fee | — | Intentional by design; reporter accepted the explanation |
 | 4 | 2026-07-29 | Crash Shield redistributes slashed weight onto already-shielded assets | Medium | Counting logic confirmed; **our first impact assessment was wrong and the reporter corrected it** |
 | 5 | 2026-07-31 | Missing slippage floor in `sellGBLINForEth` when a feed is unusable | Low | Reproduced in full; fix planned for the next migration |
+| 6 | 2026-08-02 | The 20s sell cooldown is bypassed by minting and redeeming from two addresses | Found internally | Demonstrated, 6/6 tests; the round trip is not profitable on its own |
 
 ---
 
@@ -148,6 +149,43 @@ outage and the recovery grace period, and the oracle feeds maintained their norm
 **Fix planned for the next migration**: skip a basket leg that cannot be priced rather than selling it
 unfloored, mirroring the guard the mint path already applies. Recorded in `CHANGELOG.md` under
 `[Unreleased]`.
+
+---
+
+## 6 — The sell cooldown is bypassed by minting and redeeming from two addresses
+
+**Found internally, 2026-08-02. Not reported to us — we went looking, and we are publishing it because
+a protection that does not protect is worse than no protection: people plan around it.**
+
+`_initRedeem` refuses a redemption while `block.timestamp < lastDepositTime[msg.sender] + sellCooldown`,
+with `sellCooldown` at 20 seconds. That stamp is written on whoever calls a mint function: `_mintGBLIN`
+writes `lastDepositTime[receiver]`, and `buyGBLINInKind` writes `lastDepositTime[msg.sender]`. No external
+mint function exposes the receiver — `buyGBLIN` and `buyGBLINWithToken` both pass `msg.sender` — so the
+holder of the new tokens is always the caller.
+
+The consequence is that the address that mints and the address that redeems can simply be two different
+addresses. The gate is armed on the first and questioned on the second, which was never stamped. Anyone
+willing to deploy two contracts can mint and redeem in a single transaction, which is the exact shape the
+cooldown exists to prevent. A holder who receives tokens through an aggregator or zap is in the same
+position without doing anything unusual, since the stamp lands on the router.
+
+**Demonstrated**, 6/6 tests passing, on a bit-identical copy of the deployed source under solc 0.8.34 with
+viaIR and the optimizer at 1 run. The suite asserts each revert by selector, so a `CooldownActive` is never
+mistaken for an unrelated `InvalidAmount`: a single-identity attacker is still stopped by the cooldown
+(control), while the two-identity version completes atomically, and a fresh contract per round trip never
+arms the gate at all.
+
+**What we did not demonstrate, stated plainly.** The bypass is not by itself an exploit. Measured against a
+vault already holding value, with fair fills and no NAV manipulation, the atomic round trip returned
+$149,874 on $150,000 committed — a loss of 0.084%, which is the two 0.05% fees. Gas is on top of that. A
+profitable attack would have to move NAV within the same transaction by more than that cost; we did not
+attempt to build that path, and we are not claiming it is impossible. What is established is that the
+cooldown does not provide the guarantee its presence implies.
+
+**Not patchable on the deployed contract**; `sellCooldown` is governance-settable but raising it does not
+help, because the gate is bypassed rather than outrun. A fix belongs in a migration: either stamp the
+recipient of the tokens rather than the caller, or drop the per-address cooldown in favour of a check that
+does not depend on identity.
 
 ---
 
