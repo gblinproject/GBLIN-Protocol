@@ -12,7 +12,7 @@ changed in place. Parameters are governance-settable within immutable hard caps,
 (`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`). This means a code-level fix requires a migration to a new
 contract, while a parameter-level mitigation can be applied on the live deployment after the 48h delay.
 
-Last updated: 2026-08-02.
+Last updated: 2026-08-05.
 
 ---
 
@@ -31,7 +31,7 @@ Last updated: 2026-08-02.
 
 ## 1 — Oracle-anchored min-out, no pool price limit on internal swaps
 
-**Reported by Utkarsh, 2026-07-07.**
+**Reported by Utkarsh Baghel (HackerRexx), 2026-07-07.**
 
 Internal Uniswap V3 swaps derive `amountOutMinimum` from the Chainlink price via `_lessSlippage`, and pass
 `sqrtPriceLimitX96 = 0`. An oracle-anchored floor does not protect against a pool the caller has just
@@ -57,15 +57,20 @@ protected routing is on the list for the next migration.
 
 ## 2 — NAV excluded a delisted asset while redemption paid it pro-rata
 
-**Reported by Utkarsh, 2026-07-07. Applies to the previous, deprecated contract.**
+**Reported by Utkarsh Baghel (HackerRexx), 2026-07-07. Applies to the previous, deprecated contract.**
 
 After `emergencyDelist` zeroed an asset's weight while its balance remained in custody, NAV skipped that
 asset (`dynamicWeight > 0` filter) while redemption still paid it out pro-rata. NAV was therefore
 understated, and the asymmetry was exploitable as a standing arbitrage.
 
 **Confirmed.** The asymmetry between the two loops is exactly as described. The current contract resolves
-it: the NAV loop carries no weight filter. The previous contract is deprecated and out of scope per
-`SECURITY.md`.
+it: the NAV loop carries no weight filter.
+
+**A note on scope, recorded for fairness.** The current contract was deployed on 2026-06-21, so the
+previous contract was no longer live when this report was filed. However, `SECURITY.md` kept listing the
+previous version as "current" until 2026-07-16 — nine days after the report. The staleness of that table
+was ours, the reporter was right to rely on the published policy, and the finding is recorded here as
+confirmed rather than dismissed on scope.
 
 ---
 
