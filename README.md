@@ -54,7 +54,7 @@ This document specifies the contract's mathematical model, function-level behavi
 - Uniswap V3 pool (V6): [`0xAb30...9dAE`](https://dexscreener.com/base/0xab305c45f4e42a73909a49a6775e3f7782239dae)
 - **MCP Server (npm)**: [`@gblin-protocol/mcp-server`](https://www.npmjs.com/package/@gblin-protocol/mcp-server)
 - **MCP Registry listing**: [`io.github.gblinproject/gblin-mcp-server`](https://registry.modelcontextprotocol.io/v0/servers?search=gblin)
-- **MCP repo (AI-agent toolkit)**: [github.com/gblinproject/GBLIN-MCP](https://github.com/gblinproject/GBLIN-MCP)
+- **MCP repo (AI-agent toolkit)**: [github.com/gblinproject/gblin-treasury-risk-regime](https://github.com/gblinproject/gblin-treasury-risk-regime)
 - **ElizaOS plugin (npm)**: [`plugin-gblin`](https://www.npmjs.com/package/plugin-gblin)
 - **ElizaOS plugin repo**: [github.com/gblinproject/GBLIN_PLUGIN](https://github.com/gblinproject/GBLIN_PLUGIN)
 - **Hosted MCP (Streamable HTTP)**: [`gblin-mcp.gblin-mcp-worker.workers.dev/mcp`](https://gblin-mcp.gblin-mcp-worker.workers.dev/mcp) · [Smithery](https://smithery.ai/servers/gblin-protocol/mcp)
@@ -721,7 +721,7 @@ Two ecosystem mechanisms make GBLIN spread and reward agents autonomously:
 | Repository | Purpose |
 |---|---|
 | [GBLIN-Protocol](https://github.com/gblinproject/GBLIN-Protocol) | Smart contract + this technical specification |
-| [GBLIN-MCP](https://github.com/gblinproject/GBLIN-MCP) | MCP server (`@gblin-protocol/mcp-server`) — the 8 agent tools |
+| [GBLIN-MCP](https://github.com/gblinproject/gblin-treasury-risk-regime) | MCP server (`@gblin-protocol/mcp-server`) — the 8 agent tools |
 | [GBLIN_WEBAPP](https://github.com/gblinproject/GBLIN_WEBAPP) | Web app + x402 HTTP endpoints |
 | [GBLIN_PLUGIN](https://github.com/gblinproject/GBLIN_PLUGIN) | ElizaOS plugin (`plugin-gblin`) |
 | [gblin-sentinel](https://github.com/gblinproject/gblin-sentinel) | x402 data agent (producer-side reference) |
@@ -934,7 +934,7 @@ GBLIN-Protocol/
         └── feature_request.md
 ```
 
-Companion repository: [`gblinproject/GBLIN-MCP`](https://github.com/gblinproject/GBLIN-MCP) — Model Context Protocol server (`@gblin-protocol/mcp-server`).
+Companion repository: [`gblinproject/gblin-treasury-risk-regime`](https://github.com/gblinproject/gblin-treasury-risk-regime) — Model Context Protocol server (`@gblin-protocol/mcp-server`).
 
 ---
 
