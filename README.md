@@ -48,7 +48,7 @@ This document specifies the contract's mathematical model, function-level behavi
 ### Useful links
 
 - Website: [gblin.digital](https://gblin.digital)
-- Whitepaper: [GBLIN_WHITE_PAPER_V5.pdf](https://github.com/gblinproject/Whitepaper/raw/main/GBLIN_WHITE_PAPER_V5.pdf)
+- Whitepaper: [design papers](https://github.com/gblinproject/Whitepaper) — historical documents; the addresses and parameters they contain are frozen at publication time. This README and the on-chain state are the current source of truth.
 - Dune Analytics: [dune.com/gblin/dashboard](https://dune.com/gblin/dashboard)
 - Aerodrome pool (V6): [`0x6Ac1...FFbb`](https://dexscreener.com/base/0x6ac18d5e90278d2477027b5769efb2ff0711ffbb)
 - Uniswap V3 pool (V6): [`0xAb30...9dAE`](https://dexscreener.com/base/0xab305c45f4e42a73909a49a6775e3f7782239dae)
@@ -725,7 +725,7 @@ Two ecosystem mechanisms make GBLIN spread and reward agents autonomously:
 | [GBLIN_WEBAPP](https://github.com/gblinproject/GBLIN_WEBAPP) | Web app + x402 HTTP endpoints |
 | [GBLIN_PLUGIN](https://github.com/gblinproject/GBLIN_PLUGIN) | ElizaOS plugin (`plugin-gblin`) |
 | [gblin-sentinel](https://github.com/gblinproject/gblin-sentinel) | x402 data agent (producer-side reference) |
-| [Whitepaper](https://github.com/gblinproject/Whitepaper) | GBLIN Whitepaper V5 |
+| [Whitepaper](https://github.com/gblinproject/Whitepaper) | Historical design papers (addresses inside are frozen at publication time) |
 | [Aureus](https://gblin.digital/aureus) | Autonomous trading agent — on-chain commit-reveal track record (dry-run) |
 
 ---
@@ -951,7 +951,7 @@ Contributions are welcome. Please:
 
 ## 17. References & Further Reading
 
-1. GBLIN Whitepaper V5 — [PDF](https://github.com/gblinproject/Whitepaper/raw/main/GBLIN_WHITE_PAPER_V5.pdf)
+1. GBLIN design papers — [repository](https://github.com/gblinproject/Whitepaper) (historical; superseded by this README for addresses and parameters)
 2. Adams, H. et al. *Uniswap V3 Core Whitepaper* (2021) — [uniswap.org](https://uniswap.org/whitepaper-v3.pdf)
 3. Egorov, M. *StableSwap — Curve Whitepaper* (2019) — [curve.fi](https://curve.fi/files/stableswap-paper.pdf)
 4. Chainlink Price Feeds Documentation — [docs.chain.link](https://docs.chain.link/data-feeds)
