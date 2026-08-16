@@ -606,7 +606,7 @@ GBLIN ships a first-class **MCP server** that turns the index into a treasury pr
 
 ### What the MCP server is
 
-`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **10 tools**, all free by default since v0.2.2 (read-only, calldata-only, incl. `get_market_risk_regime` and a free EIP-712 verifier for GBLIN Risk Attestations). Verifiable x402 payments live on the HTTP endpoints at `gblin.digital/api/x402/*` and the GBLIN Sentinel. It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
+`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **10 tools**, all free by default (read-only, calldata-only, incl. `get_market_risk_regime` and a free EIP-712 verifier for GBLIN Risk Attestations). Verifiable x402 payments live on the HTTP endpoints at `gblin.digital/api/x402/*` and the GBLIN Sentinel. It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
 
 #### Free tools
 
