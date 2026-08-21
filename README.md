@@ -59,6 +59,7 @@ This document specifies the contract's mathematical model, function-level behavi
 - **ElizaOS plugin repo**: [github.com/gblinproject/GBLIN_PLUGIN](https://github.com/gblinproject/GBLIN_PLUGIN)
 - **Hosted MCP (Streamable HTTP)**: [`gblin-mcp.gblin-mcp-worker.workers.dev/mcp`](https://gblin-mcp.gblin-mcp-worker.workers.dev/mcp) · [Smithery](https://smithery.ai/servers/gblin-protocol/mcp)
 - **Coherence Proof (live report)**: [`/coherence`](https://gblin-mcp.gblin-mcp-worker.workers.dev/coherence) — pre-registered promises sealed daily as [EAS attestations on Base](https://base.easscan.org/schema/view/0x9f433a96467ab75530009970e5aa938ec94d8a49f08f66e7381822d557b448ef)
+- **AI Action Receipts (transparency log)**: seal the hashes of any AI action into a public, signed append-only [RFC 6962 log](https://gblin-mcp.gblin-mcp-worker.workers.dev/log) — $0.01 via x402 at [`gblin.digital/api/x402/seal`](https://gblin.digital/api/x402/seal), free demo + free reads forever, tree root anchored daily on Base via EAS, zero-dependency [offline verifier](https://github.com/gblinproject/gblin-treasury-risk-regime/blob/main/verify-receipt.mjs)
 - **ERC-8004 identity**: agent #59286 on Base (AgentIdentity registry `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`)
 - **Timelock Controller (owner)**: [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd)
 - X / Twitter: [@GBLIN_Protocol](https://x.com/GBLIN_Protocol)
