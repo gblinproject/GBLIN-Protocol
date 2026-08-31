@@ -3,13 +3,15 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Network: Base](https://img.shields.io/badge/Network-Base%20Mainnet-blue.svg)](https://basescan.org/address/0x36C81d7E1966310F305eA637e761Cf77F90852f0)
 [![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.20-363636.svg)](https://soliditylang.org/)
-[![Version](https://img.shields.io/badge/Version-V6-green.svg)](https://github.com/gblinproject/Whitepaper)
+[![Deployed](https://img.shields.io/badge/Deployed-2026--06--21%20on%20Base-green.svg)](https://github.com/gblinproject/GBLIN-Protocol/releases/tag/deployed-2026-06-21)
 [![Governance: 48h Timelock](https://img.shields.io/badge/Governance-48h%20Timelock-1f6feb.svg)](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd)
 [![MCP Registry](https://img.shields.io/badge/MCP%20Registry-Live-9b59b6.svg)](https://registry.modelcontextprotocol.io/v0/servers?search=gblin)
 [![npm](https://img.shields.io/npm/v/@gblin-protocol/mcp-server.svg?label=@gblin-protocol/mcp-server)](https://www.npmjs.com/package/@gblin-protocol/mcp-server)
 [![Slither](https://img.shields.io/badge/Slither-0%20critical%20%2F%200%20high-success.svg)](audits/2026-06-28_slither_GBLIN_V6.md)
 
 > **Global Balanced Liquidity Index** — A fully collateralized, autonomously rebalanced, on-chain index of digital assets, deployed on Base Mainnet. Owned by a 48-hour Timelock Controller. Native AI-agent treasury via the Model Context Protocol.
+>
+> **This document is the GBLIN whitepaper.** There is no PDF: what is true is here and on-chain, and when the two disagree the chain wins.
 
 ---
 
@@ -22,7 +24,7 @@ GBLIN is a non-custodial ERC-20 index token whose price is deterministically der
 3. **In-Kind facility** — single-asset mint/redeem flows that bypass swap slippage by depositing/receiving basket assets directly (`buyGBLINInKind` / `sellGBLIN`), mirroring the authorized-participant mechanism of traditional ETFs.
 4. **AI-agent native** — a first-class Model Context Protocol (MCP) server (`@gblin-protocol/mcp-server`) lets autonomous agents on Base hold treasury in GBLIN and Just-In-Time swap to USDC for x402 micropayments. Listed on the official Anthropic MCP Registry as `io.github.gblinproject/gblin-mcp-server` and natively compatible with Coinbase AgentKit's MCP extension.
 
-V6 is **immutable but governed within a hard envelope**: every operational parameter is tunable by a **48-hour OpenZeppelin Timelock Controller**, but only inside immutable hard caps written in the code (each fee never above 5%, slippage never above 20%, crash bounds 3–90%, etc.). Ownership **cannot be renounced** — `renounceOwnership` was removed by design so the protocol can adapt its oracle/router/parameter configuration for decades (e.g. repoint a deprecated DEX router) while remaining un-ruggable. Additional V6 hardening: adaptive internal slippage (Uniswap-style 0.5%–5.5% envelope driven by on-chain volatility), Chainlink `minAnswer`/`maxAnswer` floor-clamp validation, settable swap router and per-asset pool-fee, and a transaction-level anti-flash-loan defense backed by oracle-priced NAV plus a per-address cooldown.
+The contract is **not upgradeable — there is no proxy — and it is governed inside a hard envelope**: every operational parameter is tunable by a **48-hour OpenZeppelin Timelock Controller**, but only inside immutable hard caps written in the code (each fee never above 5%, slippage never above 20%, crash bounds 3–90%, etc.). Ownership **cannot be renounced** — `renounceOwnership` was removed by design so the protocol can adapt its oracle/router/parameter configuration for decades (e.g. repoint a deprecated DEX router). What governance can reach is bounded by the hard caps below. Additional V6 hardening: adaptive internal slippage (Uniswap-style 0.5%–5.5% envelope driven by on-chain volatility), Chainlink `minAnswer`/`maxAnswer` floor-clamp validation, settable swap router and per-asset pool-fee, and a transaction-level anti-flash-loan defense backed by oracle-priced NAV plus a per-address cooldown.
 
 This document specifies the contract's mathematical model, function-level behavior, security assumptions, governance architecture, and historical case studies demonstrating capital protection during real market events.
 
@@ -48,7 +50,7 @@ This document specifies the contract's mathematical model, function-level behavi
 ### Useful links
 
 - Website: [gblin.digital](https://gblin.digital)
-- Whitepaper: [design papers](https://github.com/gblinproject/Whitepaper) — historical documents; the addresses and parameters they contain are frozen at publication time. This README and the on-chain state are the current source of truth.
+- Whitepaper: this document. The earlier PDFs were withdrawn — see the note at the top.
 - Dune Analytics: [dune.com/gblin/dashboard](https://dune.com/gblin/dashboard)
 - Aerodrome pool (V6): [`0x6Ac1...FFbb`](https://dexscreener.com/base/0x6ac18d5e90278d2477027b5769efb2ff0711ffbb)
 - Uniswap V3 pool (V6): [`0xAb30...9dAE`](https://dexscreener.com/base/0xab305c45f4e42a73909a49a6775e3f7782239dae)
@@ -119,7 +121,7 @@ flowchart TB
     Stab -.surplus → NAV.-> Holders([GBLIN Holders])
 ```
 
-The contract is the only custodian of basket assets. Every read (NAV, quotes) and every write (mint, burn, rebalance) is fully self-contained. There are no external admin keys able to move user funds: the sole admin role is the **48h Timelock Controller**, which can only execute parameter changes after a 172,800-second delay. Ownership **cannot be renounced** — `renounceOwnership` was removed in V6 by design, so the protocol stays configurable (oracles, router, parameters) for the long term while remaining un-ruggable behind the timelock and immutable hard caps.
+The contract is the only custodian of basket assets. Every read (NAV, quotes) and every write (mint, burn, rebalance) is fully self-contained. There are no external admin keys able to move user funds: the sole admin role is the **48h Timelock Controller**, which can only execute parameter changes after a 172,800-second delay. Ownership **cannot be renounced** — `renounceOwnership` was removed in V6 by design, so the protocol stays configurable (oracles, router, parameters) for the long term, behind the 48h timelock and inside the hard caps written in the code.
 
 ---
 
@@ -607,7 +609,7 @@ GBLIN ships a first-class **MCP server** that turns the index into a treasury pr
 
 ### What the MCP server is
 
-`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **10 tools**, all free by default (read-only, calldata-only, incl. `get_market_risk_regime` and a free EIP-712 verifier for GBLIN Risk Attestations). Verifiable x402 payments live on the HTTP endpoints at `gblin.digital/api/x402/*` and the GBLIN Sentinel. It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
+`@gblin-protocol/mcp-server` is a stdio-based Model Context Protocol server (Node.js) that exposes **13 tools**, all free by default (read-only, calldata-only, incl. `get_market_risk_regime`, a free EIP-712 verifier for GBLIN Risk Attestations, and the AI Action Receipts tools). Verifiable x402 payments live on the HTTP endpoints at `gblin.digital/api/x402/*` and the GBLIN Sentinel. It is **non-custodial**: it never holds keys, never signs, never broadcasts. The agent's wallet (EOA, ERC-4337, or EIP-7702) remains the sole signer.
 
 #### Free tools
 
@@ -619,12 +621,24 @@ GBLIN ships a first-class **MCP server** that turns the index into a treasury pr
 | `invest_usdc_to_gblin` | Convert USDC earnings into GBLIN treasury (MEV-safe minOut) |
 | `get_governance_state` | Verify owner == 48h Timelock + pending ops (trust gating) |
 | `share_skill_with_peer` | Generate a portable skill seed to onboard a peer agent, with an embedded ERC-8021 Builder Code referral |
+| `seal_action_demo` | Seal the hashes of an AI action into the public RFC 6962 transparency log (demo, 5/day/IP) |
+| `get_receipt` | Read back any receipt by index, with signature, inclusion proof and signed checkpoint |
+| `how_to_seal_paid` | How to reach the unmetered, paid seal endpoint over x402 |
 
-#### Paid tools (x402 micropayments)
+#### Metered tools — free by default
 
-| Tool | Price | Purpose |
+These three carry a price tag in the code, but **they run free unless the operator sets
+`MCP_PAYWALL="true"`**. The reason is stated in the source itself: a stdio server cannot verify or
+settle an x402 payment (there is no facilitator round-trip on that transport), and a paywall that
+cannot verify is a paywall that can be bypassed. Rather than pretend otherwise, the guard lets the
+call through. Verifiable x402 payments live on the HTTP endpoints at `gblin.digital/api/x402/*`
+and the GBLIN Sentinel; the MCP server monetizes through the protocol's on-chain founder fee, not
+through this transport.
+
+| Tool | Price if metered | Purpose |
 |---|---|---|
 | `analyze_treasury_health` | $0.003 USDC | Balances + gas runway + rebalance recommendation |
+| `get_market_risk_regime` | $0.002 USDC | Live calm/elevated/crash regime from the on-chain Crash Shield |
 | `find_keeper_bounty` | $0.001 USDC | **GBLIN pays you**: check for an available rebalance bounty (adaptive WETH reward, only gas required) |
 
 ### Why this matters for x402-paying agents
@@ -651,7 +665,7 @@ Coinbase and Cloudflare's **x402** standard (HTTP 402 Payment Required) requires
 
 ### Coinbase AgentKit integration
 
-GBLIN is natively compatible with Coinbase's `@coinbase/agentkit-model-context-protocol` extension. Once added to the agent's MCP client, all 8 GBLIN tools sit alongside AgentKit's native wallet tools and can be called atomically from the same agent loop.
+GBLIN is natively compatible with Coinbase's `@coinbase/agentkit-model-context-protocol` extension. Once added to the agent's MCP client, all 13 GBLIN tools sit alongside AgentKit's native wallet tools and can be called atomically from the same agent loop.
 
 ```ts
 import { MCPClient } from "@modelcontextprotocol/sdk/client/index.js";
@@ -722,11 +736,10 @@ Two ecosystem mechanisms make GBLIN spread and reward agents autonomously:
 | Repository | Purpose |
 |---|---|
 | [GBLIN-Protocol](https://github.com/gblinproject/GBLIN-Protocol) | Smart contract + this technical specification |
-| [GBLIN-MCP](https://github.com/gblinproject/gblin-treasury-risk-regime) | MCP server (`@gblin-protocol/mcp-server`) — the 8 agent tools |
+| [GBLIN-MCP](https://github.com/gblinproject/gblin-treasury-risk-regime) | MCP server (`@gblin-protocol/mcp-server`) — 13 tools over stdio, 8 over the hosted HTTP endpoint |
 | [GBLIN_WEBAPP](https://github.com/gblinproject/GBLIN_WEBAPP) | Web app + x402 HTTP endpoints |
 | [GBLIN_PLUGIN](https://github.com/gblinproject/GBLIN_PLUGIN) | ElizaOS plugin (`plugin-gblin`) |
 | [gblin-sentinel](https://github.com/gblinproject/gblin-sentinel) | x402 data agent (producer-side reference) |
-| [Whitepaper](https://github.com/gblinproject/Whitepaper) | Historical design papers (addresses inside are frozen at publication time) |
 | [Aureus](https://gblin.digital/aureus) | Autonomous trading agent — on-chain commit-reveal track record (dry-run) |
 
 ---
@@ -777,7 +790,7 @@ GBLIN_V6 enforces administrative delay at **two independent layers**:
 1. **External owner = OpenZeppelin TimelockController** at [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd). Every `onlyOwner` call must first be scheduled on the timelock and wait `172,800 seconds` before execution. The `MIN_DELAY` is immutable; the `updateDelay` override permanently reverts.
 2. **Internal asset-addition timelock** = the `proposedAsset` mini-flow inside GBLIN_V6 itself, adding a second 48h wait specifically for new basket assets.
 
-Adding a new asset therefore requires **two queued 48h windows in series**. Crucially, **every** setter below can only move a parameter **inside the immutable hard-cap envelope** (see §2) — governance can tune, never break, the protocol. And because `renounceOwnership` was **removed**, the configuration stays adaptable forever (e.g. repointing a deprecated DEX router) without ever enabling a rug.
+Adding a new asset therefore requires **two queued 48h windows in series**. Crucially, **every** setter below can only move a parameter **inside the immutable hard-cap envelope** (see §2) — governance can tune, never break, the protocol. And because `renounceOwnership` was **removed**, the configuration stays adaptable (e.g. repointing a deprecated DEX router) without widening what governance can reach.
 
 | Function | Auth | Description |
 |---|---|---|
@@ -861,7 +874,7 @@ If the ETH transfer to `founderWallet` fails, the amount is reconverted to WETH 
 
 ### 12.11 Perpetual, Hard-Capped Governance (no renounce)
 
-V6 **removed `renounceOwnership`**. Trust does not come from discarding the keys — it comes from the **48h timelock** plus **immutable hard caps**: every governable parameter is bounded in code (fees ≤ 0.5%, slippage ≤ 20%, crash band 3–90%, bounty ≤ 2%, etc.), and the swap router / oracles remain re-pointable so the protocol can survive infrastructure deprecation for decades without ever being able to rug holders.
+V6 **removed `renounceOwnership`**. Trust does not come from discarding the keys — it comes from the **48h timelock** plus **immutable hard caps**: every governable parameter is bounded in code (fees ≤ 0.5%, slippage ≤ 20%, crash band 3–90%, bounty ≤ 2%, etc.), and the swap router / oracles remain re-pointable so the protocol can survive infrastructure deprecation, while those caps bound what governance can change.
 
 ### 12.12 48h Timelock Controller (admin delay enforcement)
 
@@ -891,7 +904,7 @@ This means that even if proposer keys were compromised, an attacker still cannot
 
 A full [**Slither static-analysis run**](audits/2026-06-28_slither_GBLIN_V6.md) on the production V6 contract returned **no critical or high-severity vulnerabilities**: every high-severity flag is either a known OpenZeppelin false positive or fully mitigated by the contract's `ReentrancyGuard` and trusted-token assumptions. The complete report — one-line summary, per-detector breakdown, manually verified findings and exact reproduction commands — is published in [`audits/`](audits/).
 
-GBLIN V6 is intentionally **open to everyone**: the source is publicly verified on BaseScan, the automated security baseline is published in full, and the contract is immutable (no proxy) under a 48h Timelock. No closed audit, no hidden code — a public good for people and AI agents alike. Independent reviews and PRs are welcome (see [Contributing](#16-contributing)).
+GBLIN V6 is intentionally **open to everyone**: the source is publicly verified on BaseScan, the automated security baseline is published in full, and the contract is not upgradeable — there is no proxy — with its parameters behind a 48h Timelock. No closed audit, no hidden code — a public good for people and AI agents alike. Independent reviews and PRs are welcome (see [Contributing](#16-contributing)).
 
 ---
 
@@ -952,16 +965,15 @@ Contributions are welcome. Please:
 
 ## 17. References & Further Reading
 
-1. GBLIN design papers — [repository](https://github.com/gblinproject/Whitepaper) (historical; superseded by this README for addresses and parameters)
-2. Adams, H. et al. *Uniswap V3 Core Whitepaper* (2021) — [uniswap.org](https://uniswap.org/whitepaper-v3.pdf)
-3. Egorov, M. *StableSwap — Curve Whitepaper* (2019) — [curve.fi](https://curve.fi/files/stableswap-paper.pdf)
-4. Chainlink Price Feeds Documentation — [docs.chain.link](https://docs.chain.link/data-feeds)
-5. OpenZeppelin Contracts — [github.com/OpenZeppelin](https://github.com/OpenZeppelin/openzeppelin-contracts)
-6. Base L2 Sequencer Feed — [docs.base.org](https://docs.base.org/)
-7. EIP-2612: ERC-20 Permit — [eips.ethereum.org/EIPS/eip-2612](https://eips.ethereum.org/EIPS/eip-2612)
-8. Model Context Protocol specification — [modelcontextprotocol.io](https://modelcontextprotocol.io)
-9. x402 payment standard — [x402.org](https://www.x402.org/) and [docs.cdp.coinbase.com/x402](https://docs.cdp.coinbase.com/x402/welcome)
-10. Coinbase AgentKit MCP extension — [`@coinbase/agentkit-model-context-protocol`](https://www.npmjs.com/package/@coinbase/agentkit-model-context-protocol)
+1. Adams, H. et al. *Uniswap V3 Core Whitepaper* (2021) — [uniswap.org](https://uniswap.org/whitepaper-v3.pdf)
+2. Egorov, M. *StableSwap — Curve Whitepaper* (2019) — [curve.fi](https://curve.fi/files/stableswap-paper.pdf)
+3. Chainlink Price Feeds Documentation — [docs.chain.link](https://docs.chain.link/data-feeds)
+4. OpenZeppelin Contracts — [github.com/OpenZeppelin](https://github.com/OpenZeppelin/openzeppelin-contracts)
+5. Base L2 Sequencer Feed — [docs.base.org](https://docs.base.org/)
+6. EIP-2612: ERC-20 Permit — [eips.ethereum.org/EIPS/eip-2612](https://eips.ethereum.org/EIPS/eip-2612)
+7. Model Context Protocol specification — [modelcontextprotocol.io](https://modelcontextprotocol.io)
+8. x402 payment standard — [x402.org](https://www.x402.org/) and [docs.cdp.coinbase.com/x402](https://docs.cdp.coinbase.com/x402/welcome)
+9. Coinbase AgentKit MCP extension — [`@coinbase/agentkit-model-context-protocol`](https://www.npmjs.com/package/@coinbase/agentkit-model-context-protocol)
 
 ---
 
