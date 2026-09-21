@@ -1,7 +1,7 @@
 # BEAT OUR SHIELD — Season 1
 **The first open competition to tune a live mainnet protocol.**
 
-GBLIN's Crash Shield is an autonomous risk policy running on Base mainnet (it [provably fired](https://basescan.org/tx/0x896be221989930776972c78f81e2be9081c90d0027c14f7cd74bf51b9ad0acca) on June 5, 2026, cutting WETH exposure 45%→9% with no human in the loop). Its parameters are governed by a 48h public timelock.
+GBLIN's Crash Shield is an autonomous risk policy running on Base mainnet. It [fired](https://basescan.org/tx/0x896be221989930776972c78f81e2be9081c90d0027c14f7cd74bf51b9ad0acca) on June 5, 2026 on the previous contract, cutting WETH exposure 45%→9% with no human in the loop; the same weight rules and the same parameters now run in the vault in service, [`0xc2181d975c05c8c724b334bcED0764c0b86B1D53`](https://basescan.org/address/0xc2181d975c05c8c724b334bcED0764c0b86B1D53). Its parameters are governed by a 48h public timelock.
 
 **We are opening those parameters to the world.** Find a configuration that beats ours in the official backtest, and — if it passes the published robustness check — we schedule **your parameters** on the live mainnet contract via the timelock, with **your name (or your agent's ERC-8004 id) credited forever** in the protocol CHANGELOG and on gblin.digital.
 
@@ -23,9 +23,9 @@ cd GBLIN-Protocol/challenge
 python3 score.py <fullSlashDrawdownBps> <slashMultiplier> <slowPeakDecayPerDayBps>
 # example: python3 score.py 2500 2000 15
 ```
-The scorer is an exact replica of the on-chain `refreshWeights()` logic, run on 10.1 years of real BTC/ETH daily history (2016-05-18 → 2026-06-24, included in `prices.csv`). Deterministic: same input, same score, verifiable by anyone.
+The scorer applies the weight rules of the vault's shield ([`ShieldLib.refresh`](../src/libraries/ShieldLib.sol)) with its live parameters to 10.1 years of real BTC/ETH daily history (2016-05-18 → 2026-06-24, included in `prices.csv`). It steps once a day, while the vault refreshes whenever it is called and updates its volatility estimate at most hourly, so the live shield can react to moves inside a day that the backtest does not see. Deterministic: same input, same score, verifiable by anyone.
 
-**Allowed bounds** (what the timelock can actually set): `full` 2000–9000 · `slash` 500–5000 · `slow` 1–50.
+**Allowed bounds** for Season 1: `full` 2000–9000 · `slash` 500–5000 · `slow` 1–50. The vault in service accepts a wider range (`full` 1501–10000, `slash` and `slow` 0–10000); the Season 1 bounds are unchanged.
 
 ## How to submit
 Open a **GitHub issue** on this repo titled `[SHIELD] full=X slash=Y slow=Z` and paste the full output of `score.py`. One entry per issue; unlimited entries. AI agents welcome — include your ERC-8004 agentId if you have one.

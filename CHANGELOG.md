@@ -5,10 +5,28 @@ All notable changes to the GBLIN Protocol will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Fill agent] — 2026-09-21
+
+`GblinAuctionOrder` `0x156Ffd19819e02d9809cED8fa1416EDCD31ddaB9` and `CowFillAgent` `0x0f4307A5Eb7D33d04Cb68fb0bA4d47a56C7E2fc8` deployed on Base, and the agent set as the vault's
+fill agent. The vault itself is unchanged.
+
+### Added
+- The auction can be filled by CoW Protocol solvers. The agent owns one conditional order per auctioned row on
+  `ComposableCoW` (cbBTC and USDC), with `GblinAuctionOrder` as handler; CoW Protocol's watch-tower posts the
+  discrete orders, and a solver settles each one with a pre-hook that opens the fill and a post-hook that closes it.
+- `CowFillAgent.register` and `unregister`, callable only by the vault's owner.
+
+### Changed
+- The agent's EIP-1271 signature is the `ComposableCoW` payload; order checks moved into the handler's `verify`,
+  which also requires the order's `appData` to be one of the two registered for its row.
+
+### Deprecated
+- The first fill agent, `0xb78d74642E32e86D1d96330D047C6245a2bA7D5E`, deployed with the vault and never connected.
+
 ## [Vault in service] — 2026-09-20
 
 New deployment on Base: `GBLIN` `0xc2181d975c05c8c724b334bcED0764c0b86B1D53` with `GBLINLens`, `GBLINZap`,
-`SequencerSentinel`, `UniswapV3Adapter` and a disconnected `CowFillAgent`. Solidity 0.8.37. Sources in `src/`.
+`SequencerSentinel`, `UniswapV3Adapter` and a first `CowFillAgent`, left disconnected and later superseded. Solidity 0.8.37. Sources in `src/`.
 
 ### Changed
 - Shares are minted at NAV and redeemed pro rata in kind; the vault never swaps. Entering with any token and

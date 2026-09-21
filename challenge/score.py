@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
 BEAT OUR SHIELD — official scorer (deterministic, offline).
-Exact replica of GBLIN V6 refreshWeights() run on 10.1y of real BTC/ETH history.
+The weight rules of the vault's crash shield (ShieldLib.refresh) with its live parameters, run on
+10.1 years of daily BTC/ETH closes. The vault refreshes whenever it is called and updates its volatility
+estimate at most once per volUpdateInterval; this scorer steps once a day.
 
 Usage:
     python3 score.py <fullSlashDrawdownBps> <slashMultiplier> <slowPeakDecayPerDayBps>
 Example (current on-chain config):
     python3 score.py 3000 2000 15
 Score = Calmar ratio (CAGR / MaxDrawdown) of the shielded basket. Higher wins.
-Bounds (timelock-settable): full 2000..9000 · slash 500..5000 · slow 1..50
+Season 1 bounds: full 2000..9000 · slash 500..5000 · slow 1..50 (the vault accepts a wider range)
 """
 import sys, csv
 
@@ -48,6 +50,7 @@ def refresh_weights(assets, prices, P):
         drawdown=max(ddF,ddS)
         eff=P["baseCrashThresholdBps"]+a.ewmaVolBps*P["crashVolMultiplier"]/BPS
         eff=max(P["minCrashBps"],min(P["maxCrashBps"],eff))
+        eff=min(eff,P["fullSlashDrawdownBps"])
         if (not a.shielded) and drawdown>eff: a.shielded=True
         elif a.shielded and drawdown<P["recoveryBandBps"]: a.shielded=False
         if a.shielded:

@@ -36,7 +36,8 @@ This document is the specification. What is true is here and on-chain; when the 
 | `GBLINZap` | [`0x0E9D6Ceb6D313b021622C121Cda9C62e86e60200`](https://basescan.org/address/0x0E9D6Ceb6D313b021622C121Cda9C62e86e60200) |
 | `SequencerSentinel` | [`0x9F13C5c46a864183e1c57Ec02837fe5B980D3F67`](https://basescan.org/address/0x9F13C5c46a864183e1c57Ec02837fe5B980D3F67) |
 | `UniswapV3Adapter` | [`0x062654Bf9b5Bd88b84D7861a8f22ba94dECd9d3F`](https://basescan.org/address/0x062654Bf9b5Bd88b84D7861a8f22ba94dECd9d3F) |
-| `CowFillAgent` (deployed, not connected) | [`0xb78d74642E32e86D1d96330D047C6245a2bA7D5E`](https://basescan.org/address/0xb78d74642E32e86D1d96330D047C6245a2bA7D5E) |
+| `CowFillAgent` (the vault's fill agent) | [`0x0f4307A5Eb7D33d04Cb68fb0bA4d47a56C7E2fc8`](https://basescan.org/address/0x0f4307A5Eb7D33d04Cb68fb0bA4d47a56C7E2fc8) |
+| `GblinAuctionOrder` (auction order generator) | [`0x156Ffd19819e02d9809cED8fa1416EDCD31ddaB9`](https://basescan.org/address/0x156Ffd19819e02d9809cED8fa1416EDCD31ddaB9) |
 | Timelock (owner-elect) | [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd) |
 
 Network: Base mainnet (chain id 8453). Compiler: Solidity 0.8.37, `via_ir`, optimizer runs 1, EVM `cancun`, no CBOR metadata. Sources verified on Sourcify (full match) and Basescan. Creation transactions, launch parameters and previous deployments: [`docs/deployments.md`](docs/deployments.md).
@@ -54,9 +55,10 @@ The vault holds the assets and the shares. Everything that needs a price, a swap
 | `GBLINZap` | Mints with any token and exits to ETH. It swaps on an adapter and mints or redeems on the vault in the same call. The vault itself never touches a pool. |
 | `SequencerSentinel` | Passes the L2 sequencer uptime feed through and lets a guardian report the sequencer down. While down, the vault refuses mints and auction fills; redemptions are not affected. |
 | `UniswapV3Adapter`, `AerodromeAdapter` | Swap adapters used by the Zap, with a TWAP band that refuses a pool price too far from the oracle. |
-| `CowFillAgent` | Optional filler that lets CoW Protocol solvers fill the auction. Deployed and left disconnected: the vault's `fillAgent` is zero, so its whole surface is inert until governance connects it. |
+| `CowFillAgent` | The vault's fill agent: lets CoW Protocol solvers fill the auction inside a settlement, at the auction price or better. Its signature check is delegated to CoW Protocol's `ComposableCoW`. |
+| `GblinAuctionOrder` | Conditional order of CoW Protocol's programmatic order framework: for one basket row it cuts, from the vault's live state, the order a solver can settle against the auction, and at settlement it accepts that order only against the fill opened in the same block. |
 
-Sources: [`src/`](src/). Interfaces with full NatSpec: [`src/interfaces/`](src/interfaces/). Libraries: [`src/libraries/OracleLib.sol`](src/libraries/OracleLib.sol), [`src/libraries/ShieldLib.sol`](src/libraries/ShieldLib.sol).
+Sources: [`src/`](src/). Interfaces with full NatSpec: [`src/interfaces/`](src/interfaces/). Libraries: [`src/libraries/OracleLib.sol`](src/libraries/OracleLib.sol), [`src/libraries/ShieldLib.sol`](src/libraries/ShieldLib.sol), [`src/libraries/GPv2OrderLib.sol`](src/libraries/GPv2OrderLib.sol).
 
 ## 3. Shares and NAV
 
@@ -111,6 +113,8 @@ The vault does not rebalance itself and pays nobody to do it. When the largest d
 - `data` is passed to an optional callback (`IAuctionCallback.onAuctionFill`) so a filler can source the input after the vault has paid the output.
 
 Delisted rows carry no weight and are sold through the same auction. The auction state per row — open, premium, side, gap — is served by `GBLINLens.auction(vault, i)`.
+
+**Fills by CoW Protocol solvers.** The vault's fill agent (`setAddress(6, …)`) may bid without paying at once: the vault sends it the output, calls it back, and leaves the fill open for the rest of the block instead of pulling the input. For the cbBTC and USDC rows the agent has registered with `ComposableCoW` a conditional order whose handler, `GblinAuctionOrder`, cuts the discrete order from the vault's state — side, size and price as `bid` would compute them — stable for a five-minute bucket, and CoW Protocol's watch-tower posts it to the order book. A solver settles it in one transaction: a pre-hook opens the fill (`openFill`), the settlement verifies the order through the agent's EIP-1271 signature, which checks it against the open fill at the auction price or better, and a post-hook (`refreshWeights`) closes the fill and returns every unit of both tokens, surplus included, to the vault. While a fill is open and a swap is half done, every function of the vault that moves value reverts. Whether solvers fill an auction of the vault's current size is a matter of their economics, not of the contract.
 
 ## 8. Crash shield
 

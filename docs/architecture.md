@@ -11,10 +11,11 @@ This document expands on the overview in the [README](../README.md#2-architectur
 | `GBLINZap` | [`src/periphery/GBLINZap.sol`](../src/periphery/GBLINZap.sol) | Mint with any token; exit to ETH all or nothing. Swaps through an adapter, then calls the vault in the same transaction |
 | `SequencerSentinel` | [`src/SequencerSentinel.sol`](../src/SequencerSentinel.sol) | Pass-through of the sequencer uptime feed with a bounded guardian pause |
 | `UniswapV3Adapter`, `AerodromeAdapter` | [`src/adapters/`](../src/adapters/) | Swap adapters with a TWAP band against the oracle |
-| `CowFillAgent` | [`src/fillers/CowFillAgent.sol`](../src/fillers/CowFillAgent.sol) | Optional auction filler for CoW Protocol solvers; connected only through `setAddress(6, …)` |
-| `OracleLib`, `ShieldLib` | [`src/libraries/`](../src/libraries/) | Feed reading with freshness and identity checks; shield and in-kind fee arithmetic |
+| `CowFillAgent` | [`src/fillers/CowFillAgent.sol`](../src/fillers/CowFillAgent.sol) | The vault's fill agent (`setAddress(6, …)`): bids without paying at once, lets CoW Protocol's relayer spend the output, returns everything to the vault on close. Owns the conditional orders on `ComposableCoW`; its EIP-1271 check is delegated there |
+| `GblinAuctionOrder` | [`src/fillers/GblinAuctionOrder.sol`](../src/fillers/GblinAuctionOrder.sol) | Handler of the conditional orders: `getTradeableOrder` cuts the discrete order from the vault's state; `verify` accepts it only against the fill open in the same block |
+| `OracleLib`, `ShieldLib`, `GPv2OrderLib` | [`src/libraries/`](../src/libraries/) | Feed reading with freshness and identity checks; shield and in-kind fee arithmetic; the CoW Protocol order struct and its EIP-712 hash |
 
-External dependencies: OpenZeppelin (`SafeERC20`, `ReentrancyGuard`, `Math`, `SafeCast`, interfaces), Solady (`ERC20`, `SafeTransferLib`, `SignatureCheckerLib`), Chainlink aggregators and the Base sequencer uptime feed, WETH9, Uniswap V3 and Aerodrome for the adapters. The exact library files are vendored under [`lib/`](../lib/).
+External dependencies: OpenZeppelin (`SafeERC20`, `ReentrancyGuard`, `Math`, `SafeCast`, interfaces), Solady (`ERC20`, `SafeTransferLib`, `SignatureCheckerLib`), Chainlink aggregators and the Base sequencer uptime feed, WETH9, Uniswap V3 and Aerodrome for the adapters, and CoW Protocol's settlement contract and `ComposableCoW` for the fill agent. The exact library files are vendored under [`lib/`](../lib/).
 
 ## Flows
 
@@ -67,6 +68,28 @@ anyone → GBLIN.bid(index, vaultBuysAsset, amountIn, minOut, data)
   → pay the output; call the optional callback with data; pull the input; require minOut
   → emit AuctionFill; close the auction if every row is within the closing band
 ```
+
+### Auction filled by CoW Protocol solvers
+
+```
+watch-tower → ComposableCoW.getTradeableOrderWithSignature(agent, params, "", [])
+  → GblinAuctionOrder.getTradeableOrder: fill agent set? no fill open? auction open, gap > 0, not the opening block?
+  → side, size and price as bid computes them, with the premium at the start of a five-minute bucket
+  → a condition that can change reverts with a polling error (PollTryNextBlock, PollTryAtEpoch), so the order is polled again;
+    only an order that can never be valid (another owner, a WETH or abandoned row) reverts with OrderNotValid
+  → the watch-tower posts the order with its appData hash to the CoW Protocol order book
+
+solver → GPv2Settlement.settle(...)
+  pre-hook   → CowFillAgent.openFill(row, side) → GBLIN.bid(..., data = 0x01)
+               → the vault pays the output to the agent, calls onAuctionFill, leaves the fill open
+               → the agent records the fill and approves the relayer for the output only
+  signature  → CowFillAgent.isValidSignature → ComposableCoW.isValidSafeSignature → GblinAuctionOrder.verify
+               → same block, same tokens, no fee, receiver = agent, ERC-20 balances, price ≥ the fill's, registered appData
+  trade      → the relayer pulls the output; the solver delivers the input to the agent
+  post-hook  → GBLIN.refreshWeights → close the fill: the agent returns both tokens, surplus included
+```
+
+While the fill is open and the swap is half done, every function of the vault that moves value reverts. A fill left open in an earlier block is closed by any call of the vault, or by anyone through `CowFillAgent.emergencyClose`.
 
 ### Payment by signature
 

@@ -26,3 +26,5 @@ build/
 graphify-out/
 out/
 cache/
+__pycache__/
+*.pyc

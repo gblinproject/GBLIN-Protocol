@@ -85,7 +85,7 @@ confirmed rather than dismissed on scope.
 **Intentional by design, not a defect.** `buyGBLINInKind` is the path for depositing the exact basket
 directly, with no internal swap and no DEX slippage. Because that path performs no internal swap, the
 stability fee is deliberately not split out to the keeper reserve; the deposited value stays in the vault
-and accrues to NAV, benefiting every holder pro-rata. The founder fee still applies on this path.
+and accrues to NAV, benefiting every holder pro-rata. The protocol fee still applies on this path.
 
 The reporter accepted this explanation. One fair point stands: the `YieldDistributed` event name reads as
 a transfer into a separate fund, when the amount represents value accruing to NAV. That is a naming and

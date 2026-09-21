@@ -6,95 +6,65 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IGBLIN} from "../interfaces/IGBLIN.sol";
 import {IAuctionCallback} from "../interfaces/IAuctionCallback.sol";
 import {IFillAgent} from "../interfaces/IFillAgent.sol";
+import {ICowFillAgent} from "../interfaces/ICowFillAgent.sol";
 import {IGPv2Settlement} from "../interfaces/external/IGPv2Settlement.sol";
+import {IComposableCoW} from "../interfaces/external/IComposableCoW.sol";
+import {IConditionalOrder} from "../interfaces/external/IConditionalOrder.sol";
+import {GPv2OrderLib} from "../libraries/GPv2OrderLib.sol";
+import {GblinAuctionOrder} from "./GblinAuctionOrder.sol";
 
 /// @title CoW Protocol fill agent for GBLIN auctions
 /// @author GBLIN Protocol
 /// @notice Bids in the vault's auction without paying at once, and lets CoW Protocol solvers settle the fill in the
 ///         same block through an EIP-1271 order at the auction price or better. When the vault closes the fill, every
-///         unit of the two tokens goes back to it, including any surplus the solvers delivered.
+///         unit of the two tokens goes back to it, including any surplus the solvers delivered. The orders themselves
+///         are conditional orders of the CoW Protocol programmatic order framework, registered here by the vault's
+///         owner and posted by the framework's watch-tower.
 /// @dev One fill, inside one CoW settlement: the order's pre-hook calls `openFill`, which bids with no input limit; the
 ///      vault sends its output here, calls `onAuctionFill` and, because the caller is its fill agent, leaves the fill
-///      open instead of pulling the input. The settlement then verifies the order through `isValidSignature`, pulls the
-///      sold token through the vault relayer and delivers the bought token here; the post-hook calls the vault's
-///      `refreshWeights`, which calls `close`. Any later call of the vault that moves value closes the fill as well.
-///      The pattern follows the trusted fillers of Reserve Protocol (MIT). The agent has no owner and keeps no balance
-///      between fills.
+///      open instead of pulling the input. The settlement then verifies the order through `isValidSignature`, which
+///      this contract forwards to `ComposableCoW` and, through it, to the order generator that checks the order
+///      against the open fill; the settlement pulls the sold token through the vault relayer and delivers the bought
+///      token here; the post-hook calls the vault's `refreshWeights`, which calls `close`. Any later call of the vault
+///      that moves value closes the fill as well. The fill pattern follows the trusted fillers of Reserve Protocol
+///      (MIT). The agent has no owner and keeps no balance between fills.
 /// @custom:security-contact info@gblin.digital
-contract CowFillAgent is IFillAgent, IAuctionCallback {
-    /// @notice The caller is not the vault, or the order is used outside the block in which the fill was opened.
-    error Unauthorized();
-    /// @notice A fill is open.
-    error FillOpen();
-    /// @notice A swap has taken part of the sold token without delivering the bought one.
-    error SwapActive();
-    /// @notice The order does not match the open fill. `code`: 0 digest, 1 sell token, 2 buy token, 3 fee, 4 receiver,
-    ///         5 sell balance, 6 buy balance, 7 zero sell amount, 8 price below the auction price.
-    error OrderRejected(uint256 code);
-
-    /// @notice The vault opened a fill of `sellAmount` of `sellToken` for at least `minBuyAmount` of `buyToken`.
-    event FillOpened(address indexed sellToken, address indexed buyToken, uint256 sellAmount, uint256 minBuyAmount);
-    /// @notice Closing could not send `amount` of `token` back to the vault; it stays here until `rescue` succeeds.
-    event ReturnFailed(address indexed token, uint256 amount);
-    /// @notice A fill left open in an earlier block was cleared with `emergencyClose`.
-    event FillForceClosed(address indexed sellToken, address indexed buyToken, uint256 sellReturned, uint256 bought);
-
-    /// @notice A CoW Protocol order, field for field in the order the settlement contract hashes it.
-    struct Order {
-        address sellToken;
-        address buyToken;
-        address receiver;
-        uint256 sellAmount;
-        uint256 buyAmount;
-        uint32 validTo;
-        bytes32 appData;
-        uint256 feeAmount;
-        bytes32 kind;
-        bool partiallyFillable;
-        bytes32 sellTokenBalance;
-        bytes32 buyTokenBalance;
-    }
-
-    /// @dev keccak256 of the EIP-712 type string of a CoW Protocol order.
-    bytes32 private constant ORDER_TYPE_HASH = 0xd5a25ba2e97094ad7d83dc28a6572da797d6b3e7fc6663bd93efb789fc17e489;
-    /// @dev keccak256("erc20"): the order moves plain ERC-20 balances.
-    bytes32 private constant BALANCE_ERC20 = 0x5a28e9363bb942b639270062aa6bb295f434bcdfc42c97267bf003f272060dc9;
-
+contract CowFillAgent is ICowFillAgent, IFillAgent, IAuctionCallback {
     /// @notice The vault this agent serves.
     address public immutable VAULT;
     /// @notice CoW Protocol vault relayer, the only spender of the sold token.
     address public immutable RELAYER;
     /// @notice EIP-712 domain separator of the CoW Protocol settlement contract.
     bytes32 public immutable DOMAIN_SEPARATOR;
+    /// @notice The `ComposableCoW` contract the orders are registered with.
+    IComposableCoW public immutable COMPOSABLE_COW;
+    /// @notice The order generator every registered conditional order points to.
+    GblinAuctionOrder public immutable ORDER_HANDLER;
 
-    /// @notice Token the open fill sells.
+    /// @inheritdoc ICowFillAgent
     address public sellToken;
-    /// @notice Token the open fill buys.
+    /// @inheritdoc ICowFillAgent
     address public buyToken;
-    /// @notice Amount of `sellToken` the vault sent for the open fill.
+    /// @inheritdoc ICowFillAgent
     uint256 public sellAmount;
-    /// @notice Least amount of `buyToken` for the whole `sellAmount`; a partial sale needs its pro rata part, rounded
-    ///         up.
+    /// @inheritdoc ICowFillAgent
     uint256 public minBuyAmount;
-    /// @notice Block in which the open fill was opened; zero when no fill is open.
+    /// @inheritdoc ICowFillAgent
     uint256 public openBlock;
 
     /// @param vault The GBLIN vault.
     /// @param settlement The CoW Protocol settlement contract.
-    constructor(address vault, address settlement) {
+    /// @param composableCoW The `ComposableCoW` contract.
+    /// @param orderHandler The order generator, built for `vault`.
+    constructor(address vault, address settlement, address composableCoW, address orderHandler) {
         VAULT = vault;
         RELAYER = IGPv2Settlement(settlement).vaultRelayer();
         DOMAIN_SEPARATOR = IGPv2Settlement(settlement).domainSeparator();
+        COMPOSABLE_COW = IComposableCoW(composableCoW);
+        ORDER_HANDLER = GblinAuctionOrder(orderHandler);
     }
 
-    /// @notice Opens a fill of the auction of the vault's `basket[index]`: bids with no input limit and keeps the
-    ///         output for CoW Protocol orders in this block. Anyone can call; meant as the pre-hook of the agent's
-    ///         order.
-    /// @param index Basket row.
-    /// @param vaultBuysAsset As in the vault's `bid`.
-    /// @return amountIn Least amount of the input the solvers must deliver for the whole output, pro rata if partly
-    ///                  sold.
-    /// @return amountOut Output received from the vault.
+    /// @inheritdoc ICowFillAgent
     function openFill(uint256 index, bool vaultBuysAsset) external returns (uint256 amountIn, uint256 amountOut) {
         return IGBLIN(VAULT).bid(index, vaultBuysAsset, type(uint256).max, 0, hex"01");
     }
@@ -120,32 +90,44 @@ contract CowFillAgent is IFillAgent, IAuctionCallback {
     }
 
     /// @notice EIP-1271: accepts a CoW Protocol order for the open fill, in the block in which it was opened.
-    /// @dev The price check multiplies exactly, without rounding: `buyAmount / sellAmount` of the order must be at
-    ///      least `minBuyAmount / sellAmount` of the fill. The settlement contract rounds each executed buy amount up,
-    ///      so every trade it executes under this order also meets the fill's price.
-    ///      `kind`, `partiallyFillable` and `validTo` are left unchecked on purpose. Quantity is bounded by the
-    ///      allowance this contract gives the relayer, which is exactly the output the vault sent, so an order larger
-    ///      than the fill cannot take more. Price is bounded by the ratio below for either kind: the settlement
-    ///      rounds the amount this contract buys up and the amount it sells down. And an order is only accepted in
-    ///      the block its fill was opened, which no `validTo` can widen.
+    /// @dev The signature carries the order and the `ComposableCoW` payload that names the registered conditional
+    ///      order. After checking that the digest is the order's, verification is delegated to `ComposableCoW`,
+    ///      which checks the registration and calls the order generator's `verify` against the open fill.
     /// @param digest EIP-712 digest of the order, as computed by the settlement contract.
-    /// @param signature The order, ABI-encoded.
+    /// @param signature ABI-encoded `(GPv2OrderLib.Data, IComposableCoW.PayloadStruct)`.
     /// @return The EIP-1271 magic value.
     function isValidSignature(bytes32 digest, bytes calldata signature) external view returns (bytes4) {
-        if (openBlock != block.number) revert Unauthorized();
-        Order memory o = abi.decode(signature, (Order));
-        bytes32 structHash = keccak256(abi.encode(ORDER_TYPE_HASH, o));
-        if (digest != keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash))) revert OrderRejected(0);
-        if (o.sellToken != sellToken) revert OrderRejected(1);
-        if (o.buyToken != buyToken) revert OrderRejected(2);
-        if (o.feeAmount != 0) revert OrderRejected(3);
-        if (o.receiver != address(this)) revert OrderRejected(4);
-        if (o.sellTokenBalance != BALANCE_ERC20) revert OrderRejected(5);
-        if (o.buyTokenBalance != BALANCE_ERC20) revert OrderRejected(6);
-        if (o.sellAmount == 0) revert OrderRejected(7);
-        // Checked products: an order too large to multiply reverts, which rejects it.
-        if (o.buyAmount * sellAmount < minBuyAmount * o.sellAmount) revert OrderRejected(8);
-        return this.isValidSignature.selector;
+        (GPv2OrderLib.Data memory order, IComposableCoW.PayloadStruct memory payload) =
+            abi.decode(signature, (GPv2OrderLib.Data, IComposableCoW.PayloadStruct));
+        if (GPv2OrderLib.hash(order, DOMAIN_SEPARATOR) != digest) revert OrderRejected(0);
+        return COMPOSABLE_COW.isValidSafeSignature(
+            address(this), msg.sender, digest, DOMAIN_SEPARATOR, bytes32(0), abi.encode(order), abi.encode(payload)
+        );
+    }
+
+    /// @inheritdoc ICowFillAgent
+    /// @dev The salt is the row index: one conditional order per row, and a new registration for the same row with
+    ///      other data has a different hash, so the previous one must be removed by hand.
+    function register(uint256 index, bytes32 appDataVaultBuys, bytes32 appDataVaultSells, uint32 bucketSeconds)
+        external
+        returns (bytes32 singleOrderHash)
+    {
+        if (msg.sender != IGBLIN(VAULT).owner()) revert Unauthorized();
+        IConditionalOrder.ConditionalOrderParams memory params = IConditionalOrder.ConditionalOrderParams({
+            handler: ORDER_HANDLER,
+            salt: bytes32(index),
+            staticInput: abi.encode(GblinAuctionOrder.Data(index, appDataVaultBuys, appDataVaultSells, bucketSeconds))
+        });
+        singleOrderHash = keccak256(abi.encode(params));
+        COMPOSABLE_COW.create(params, true);
+        emit AuctionOrderRegistered(index, singleOrderHash);
+    }
+
+    /// @inheritdoc ICowFillAgent
+    function unregister(bytes32 singleOrderHash) external {
+        if (msg.sender != IGBLIN(VAULT).owner()) revert Unauthorized();
+        COMPOSABLE_COW.remove(singleOrderHash);
+        emit AuctionOrderRemoved(singleOrderHash);
     }
 
     /// @inheritdoc IFillAgent
@@ -171,11 +153,10 @@ contract CowFillAgent is IFillAgent, IAuctionCallback {
         sold = amount > left ? amount - left : 0;
     }
 
-    /// @notice Clears a fill left open in an earlier block and sends every unit of its two tokens back to the vault.
-    /// @dev Anyone may call it and it cannot fail. An order of this agent is only valid in the block its fill was
-    ///      opened, so once that block is past there is nothing left to protect, and the tokens go to the vault
-    ///      whoever the caller is. It exists so that a fill the vault could not close, for any reason, can never keep
-    ///      this agent or its balances locked.
+    /// @inheritdoc ICowFillAgent
+    /// @dev An order of this agent is only valid in the block its fill was opened, so once that block is past there
+    ///      is nothing left to protect, and the tokens go to the vault whoever the caller is. It exists so that a
+    ///      fill the vault could not close, for any reason, can never keep this agent or its balances locked.
     function emergencyClose() external {
         if (openBlock == 0 || openBlock == block.number) revert Unauthorized();
         address tokenSold = sellToken;
@@ -183,6 +164,12 @@ contract CowFillAgent is IFillAgent, IAuctionCallback {
         _clear();
         (uint256 left, uint256 bought) = _returnAll(tokenSold, tokenBought);
         emit FillForceClosed(tokenSold, tokenBought, left, bought);
+    }
+
+    /// @inheritdoc ICowFillAgent
+    function rescue(address token) external {
+        if (openBlock != 0) revert FillOpen();
+        SafeTransferLib.safeTransferAll(token, VAULT);
     }
 
     /// @dev Forgets the open fill.
@@ -203,13 +190,6 @@ contract CowFillAgent is IFillAgent, IAuctionCallback {
         if (left != 0 && !_tryCall(tokenSold, 0xa9059cbb, VAULT, left)) emit ReturnFailed(tokenSold, left);
         bought = _balance(tokenBought);
         if (bought != 0 && !_tryCall(tokenBought, 0xa9059cbb, VAULT, bought)) emit ReturnFailed(tokenBought, bought);
-    }
-
-    /// @notice Sends the whole balance of `token` to the vault while no fill is open.
-    /// @param token Token to send.
-    function rescue(address token) external {
-        if (openBlock != 0) revert FillOpen();
-        SafeTransferLib.safeTransferAll(token, VAULT);
     }
 
     /// @dev Balance of this contract, read with a gas-capped staticcall that copies at most one word: a token that

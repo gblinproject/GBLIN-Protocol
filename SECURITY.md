@@ -69,14 +69,18 @@ and this section will be updated before any such program is announced anywhere e
 This release has had no paid third-party audit. It was reviewed line by line by the maintainer and by three
 AI systems — Fable 5.1, Grok 4 (Expert) and ChatGPT (Thinking) — with reproducible reading tests; the
 testing campaigns and their limits are summarized in [`audits/README.md`](audits/README.md). Paid audits will
-follow as the protocol earns its own budget. Nothing here should be read as "audited".
+follow as the protocol earns its own budget. Nothing here should be read as "audited". The fill agent and the
+order generator were added after the launch and have not been through the AI reviews; what they have been through
+is listed in the same file.
 
 ## Supported Versions
 
 | Contract | Supported |
 |---|---|
 | Vault in service — `0xc2181d975c05c8c724b334bcED0764c0b86B1D53`, with its Lens, Zap and sentinel | ✅ |
+| Fill agent `0x0f4307A5Eb7D33d04Cb68fb0bA4d47a56C7E2fc8` and order generator `0x156Ffd19819e02d9809cED8fa1416EDCD31ddaB9` | ✅ |
 | Previous index contract — `0x36C81d7E1966310F305eA637e761Cf77F90852f0` | Reports accepted; no changes are possible on a deployed contract |
+| First fill agent `0xb78d74642E32e86D1d96330D047C6245a2bA7D5E` (never connected) | ❌ |
 | Older contracts | ❌ |
 
 Only the vault in service receives changes, and only through a new deployment.
