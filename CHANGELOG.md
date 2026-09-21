@@ -5,22 +5,31 @@ All notable changes to the GBLIN Protocol will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — planned for the next contract migration
+## [Vault in service] — 2026-09-20
+
+New deployment on Base: `GBLIN` `0xc2181d975c05c8c724b334bcED0764c0b86B1D53` with `GBLINLens`, `GBLINZap`,
+`SequencerSentinel`, `UniswapV3Adapter` and a disconnected `CowFillAgent`. Solidity 0.8.37. Sources in `src/`.
+
+### Changed
+- Shares are minted at NAV and redeemed pro rata in kind; the vault never swaps. Entering with any token and
+  exiting to ETH go through `GBLINZap`, all or nothing.
+- Rebalancing is a Dutch auction (`bid`) at the oracle price adjusted by a premium; there is no bounty and no
+  stability fund. Anyone can fill it.
+- Fees: 0.05% protocol and 0.05% stability on mints with ETH or WETH; an in-kind floor of 0.50% plus a deviation
+  tax; a 0.50% yearly management fee. All fees to the protocol are minted as shares. No fee on redemption.
+- Payments by signature (EIP-3009) with `(v, r, s)` and bytes signatures; `eip712Domain()` (EIP-5267).
+- Ownership in two steps (`transferOwnership`, `acceptOwnership`); no `renounceOwnership`.
+- A leg that cannot be delivered on redemption is credited and claimed with `claimPending`; transfers on the
+  way out run under a gas cap.
+- Assets can be delisted, relisted and abandoned; listing requires a probe deposit and stores the decimals.
+- The sequencer sentinel lets a guardian pause mints and fills for a bounded stretch; redemptions are never paused.
 
 ### Security
-- `sellGBLINForEth` will skip a basket leg it cannot price instead of dispatching the swap with
-  `amountOutMinimum = 0`, mirroring the guard `_mintGBLIN` already applies. Reported externally on
-  2026-07-31 with a Foundry proof of concept and reproduced in full on 2026-08-01. No action is possible on
-  the live contract, which is immutable and owned by the 48h timelock; the staleness window `oracleTimeout`
-  (governance-settable up to 7 days, currently 25h since 2026-07-18) governs how often the triggering state
-  can arise via the staleness path.
-- The sell cooldown will stop depending on the caller's identity. Today `_initRedeem` gates on
-  `lastDepositTime[msg.sender]` while every mint stamps its own caller, so minting and redeeming from two
-  addresses bypasses the gate entirely — including, without any intent, for anyone who receives tokens
-  through an aggregator. Found internally on 2026-08-02 and demonstrated with a 6-test proof of concept.
-  Raising `sellCooldown` through the timelock does not help, because the gate is bypassed rather than
-  outrun. See `KNOWN_ISSUES.md` §6, which also records that the atomic round trip costs 0.084% in fees and
-  was not shown to be profitable on its own.
+- Addressed every finding recorded in `KNOWN_ISSUES.md` against the previous contract; the status of each on
+  this deployment is in its section "Status on the vault in service". In particular the exit to ETH no longer
+  dispatches a swap with a zero minimum for a leg it cannot price (§5): it is all or nothing in `GBLINZap`,
+  under the caller's minimum and a NAV-based bound. The sell cooldown is written only for a minter who receives
+  its own shares (§6); a transfer still bypasses it, by design, and the round trip costs the mint fees.
 
 ## [Challenge] — 2026-07-27
 

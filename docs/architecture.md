@@ -1,81 +1,82 @@
-# GBLIN Protocol — Architecture
+# Architecture
 
-> **Nota di versione (2026-07):** questo documento è nato per la V5. La produzione è **V6** (`0x36C81d7E1966310F305eA637e761Cf77F90852f0`, owner = timelock 48h). Stessa architettura di fondo, con questi delta: Crash Shield adattivo dual-peak (trigger da ~15%, taglio proporzionale), fee split istantaneo al posto del drip settimanale, slippage interno adattivo 0.5–5.5% (non fisso 2%), bounty keeper adattiva (non fissa 0.0001 ETH), router/parametri settabili solo via timelock entro hard cap nel bytecode, uscita in-kind indipendente da oracoli/sequencer. Dettagli completi nel [README](../README.md) e nel [CHANGELOG](../CHANGELOG.md).
-
-This document expands on the high-level architecture summarized in the [main README](../README.md#1-protocol-architecture).
+This document expands on the overview in the [README](../README.md#2-architecture).
 
 ## Components
 
-### 1. Core Contract ([GBLIN_V6.sol](../GBLIN_V6.sol))
+| Contract | Source | Responsibility |
+|---|---|---|
+| `GBLIN` | [`src/GBLIN.sol`](../src/GBLIN.sol) | ERC-20 share (Solady base, EIP-3009), custody of the basket, NAV, mints at NAV, redemption in kind with credits, Dutch auction, crash shield, fee accrual, ownership in two steps |
+| `GBLINLens` | [`src/periphery/GBLINLens.sol`](../src/periphery/GBLINLens.sol) | Read-only views over the vault's storage: quotes, configuration, rows, auction, credits, cooldowns |
+| `GBLINZap` | [`src/periphery/GBLINZap.sol`](../src/periphery/GBLINZap.sol) | Mint with any token; exit to ETH all or nothing. Swaps through an adapter, then calls the vault in the same transaction |
+| `SequencerSentinel` | [`src/SequencerSentinel.sol`](../src/SequencerSentinel.sol) | Pass-through of the sequencer uptime feed with a bounded guardian pause |
+| `UniswapV3Adapter`, `AerodromeAdapter` | [`src/adapters/`](../src/adapters/) | Swap adapters with a TWAP band against the oracle |
+| `CowFillAgent` | [`src/fillers/CowFillAgent.sol`](../src/fillers/CowFillAgent.sol) | Optional auction filler for CoW Protocol solvers; connected only through `setAddress(6, …)` |
+| `OracleLib`, `ShieldLib` | [`src/libraries/`](../src/libraries/) | Feed reading with freshness and identity checks; shield and in-kind fee arithmetic |
 
-Single ERC-20 contract that:
-- Mints/burns GBLIN tokens.
-- Custodies basket assets (cbBTC, WETH, USDC).
-- Computes NAV from Chainlink oracles.
-- Executes Uniswap V3 swaps for rebalancing.
-- Manages stability fund and yield distribution.
+External dependencies: OpenZeppelin (`SafeERC20`, `ReentrancyGuard`, `Math`, `SafeCast`, interfaces), Solady (`ERC20`, `SafeTransferLib`, `SignatureCheckerLib`), Chainlink aggregators and the Base sequencer uptime feed, WETH9, Uniswap V3 and Aerodrome for the adapters. The exact library files are vendored under [`lib/`](../lib/).
 
-### 2. External Dependencies
+## Flows
 
-| Dependency | Purpose |
-|---|---|
-| OpenZeppelin Contracts | ERC20, ERC20Permit, ReentrancyGuard |
-| Chainlink AggregatorV3Interface | Price feeds + sequencer feed |
-| Uniswap V3 SwapRouter | Asset swaps on Base |
-| WETH9 | ETH wrapping |
-
-### 3. Off-chain Components
-
-| Component | Role |
-|---|---|
-| Keepers (any address) | Trigger `incentivizedRebalance()` and earn 0.0001 ETH |
-| Frontend (gblin.digital) | UX layer for buy/sell/redeem |
-| Dune Analytics | Public dashboard |
-
-## Data Flow
-
-### Buy flow
+### Mint with ETH
 
 ```
-User → buyGBLIN(minOut) [+ETH]
-  → IWETH.deposit()
-  → _quoteBuy: nav, founderFee, stabilityFee
-  → _mint(user, gblinOut)
-  → withdraw founderFee → founderWallet
-  → for each non-WETH asset: swap WETH→asset on Uniswap V3
+holder → GBLIN.buyGBLIN(minOut) [+ETH]
+  → sequencer up? feeds fresh for trading?
+  → shield refresh, management fee accrual
+  → value the deposit at the ETH feed; take protocol fee (shares to the fee recipient) and stability fee (stays)
+  → mint shares at NAV to the holder; record the cooldown for the minter
   → emit Minted
-  → _autoDistributeYield
 ```
 
-### Sell flow
+### Mint with another token
 
 ```
-User → sellGBLIN(amount)
-  → cooldown check
-  → _getPreBurnShares: pro-rata WETH + each asset
-  → _burn(user, amount)
-  → withdraw WETH → user
-  → for each asset: transfer asset → user
-  → emit Burned
+holder → GBLINZap.buyGBLINWithToken(tokenIn, amountIn, minWethOut, minOut, venueData, receiver)
+  → pull tokenIn; swap to WETH on the adapter (TWAP band, minWethOut)
+  → GBLIN.buyGBLINWithWeth(weth, minOut, receiver)
 ```
 
-### Rebalance flow
+### Redemption in kind
 
 ```
-Keeper → incentivizedRebalance(idx, isWethToAsset, amount)
-  → minSwapRequired check
-  → refreshWeights
-  → compute target/current ETH value
-  → swap on Uniswap V3 with 2% maxSlippage
-  → reward 0.0001 ETH from stabilityFund → keeper
+holder → GBLIN.sellGBLIN(shares)
+  → cooldown check (only for the holder's own mints)
+  → management fee accrual; close an open fill if any
+  → burn; for each row transfer the pro-rata slice with a gas cap
+  → a leg that fails is credited (claimPending); a token that does not answer balanceOf is skipped
+  → emit Redeemed
 ```
 
-## Storage Layout
+### Exit to ETH
 
-The basket is stored as a dynamic array (`Asset[] basket`) for gas efficiency at the cost of slightly higher iteration cost. Trade-off accepted because:
-- Number of basket assets remains small (≤ 5 expected).
-- Iteration occurs only during NAV reads and rebalances.
+```
+holder → GBLINZap.sellGBLINForEth(shares, minEthOut, venueData[], receiver)
+  → pull shares; GBLIN.sellGBLIN on the Zap's behalf
+  → sell every non-WETH leg on the adapters; unwrap; deliver ETH ≥ minEthOut
+  → any failure reverts the whole call: the holder keeps the shares
+```
 
-## Upgradeability
+### Auction
 
-**The contract is non-upgradeable.** A migration to a new version requires deploying a new contract and providing migration tooling for users (in-kind redeem then re-mint on new contract). This is a deliberate trust-minimization choice.
+```
+anyone → GBLIN.bid(index, vaultBuysAsset, amountIn, minOut, data)
+  → sequencer up, feeds fresh, shield refresh, fee accrual, drift check
+  → premium = auctionPremiumBps(); price = oracle × (1 + premium)
+  → input trimmed to the gap and to the WETH held; output computed at that price
+  → pay the output; call the optional callback with data; pull the input; require minOut
+  → emit AuctionFill; close the auction if every row is within the closing band
+```
+
+### Payment by signature
+
+```
+payer signs TransferWithAuthorization(from, to, value, validAfter, validBefore, nonce)
+relayer → GBLIN.transferWithAuthorization(..., signature)
+  → domain "Global Balanced Liquidity Index" / "1"; nonce unused; window open
+  → transfer; emit AuthorizationUsed
+```
+
+## Storage and immutables
+
+The basket is a dynamic array of rows, each packed into a fixed number of slots read by the Lens. Addresses that never change — WETH, the adapters' venues — are immutables, so the deployed bytecode differs from a fresh build only in those values. There is no proxy and no upgrade path: a successor is a new deployment, and holders move by redeeming in kind and minting again.

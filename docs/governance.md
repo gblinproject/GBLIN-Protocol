@@ -1,67 +1,69 @@
 # Governance
 
-GBLIN Protocol uses **minimal governance with timelock-protected admin actions**. There is no DAO token, no voting, no off-chain proposal system. Governance is intentionally constrained to operational maintenance.
+GBLIN has no governance token, no vote and no off-chain proposal system. The vault has one owner, meant to be a 48-hour timelock, and every owner action is bounded in code. Trust rests on two things that hold for the life of the vault: the delay, which gives holders time to leave before any change lands, and the bounds, which no change can exceed.
 
 ## Roles
 
-| Role | Address (current) | Powers |
+| Role | Address | Powers |
 |---|---|---|
-| `owner` (held by 48h Timelock) | [`0x6aBeC8…E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd) | Asset proposal/addition, oracle updates, fee tuning (≤ hard cap), slippage / crash / bounty / cooldown parameters (all bounded), ownership transfer. **Cannot renounce** (removed in V6) |
-| `founderWallet` | (see contract) | Receives founder fee (0.05% of mints), can update its own address |
+| Owner (timelock, `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`, pending until the scheduled acceptance executes) | 48-hour delay, 14-day grace, open executor | Parameters, addresses, base weights, asset listing and delisting, ownership transfer |
+| Proposer on the timelock | `0x9FFa542E369C53af62380296092EC669f329a9ee` | Schedules operations |
+| Canceller on the timelock | `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA` | Cancels scheduled operations |
+| Fee recipient | `0x9FFa542E369C53af62380296092EC669f329a9ee` | Receives the protocol and management fees as shares; changed only by the owner |
+| Sentinel guardian | `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA` | Reports the sequencer down for a bounded stretch |
 
-## Constraints
+The deployer holds ownership of the vault and the sentinel until the scheduled `acceptOwnership` operations execute; the state is public through `pendingOwner()` and the timelock, and through `get_governance_state` in the MCP server.
 
-### Timelock (48 hours)
+## What the owner can do, and within what bounds
 
-All asset additions go through a mandatory 48-hour timelock:
+### `setParam(key, values)`
 
-```
-proposeAsset(...)  →  wait 48h  →  executeAssetAddition()
-```
+| Key | Group | Bounds enforced in code |
+|---|---|---|
+| 2 | Crash shield: base threshold, volatility multiplier, recovery band, slash multiplier | threshold above zero and below the full-slash drawdown; multiplier ≤ 100000; band below the minimum crash threshold; slash ≤ 10000 |
+| 3 | Mint fees: protocol, stability | sum ≤ 100 bps; protocol ≤ in-kind floor |
+| 4 | Auction: start discount, cap, ramp | 1–300 bps; ≤ 300 bps; 1 minute to 30 days |
+| 5 | Minimum deposit | ≤ 10 ETH |
+| 6 | Feed ages: pricing, trading | 10 minutes to 6 hours; 1 minute to the pricing age |
+| 7 | Peg band of stable assets | ≤ 1000 bps |
+| 8 | Auction band: opening threshold, closing threshold | 1–10000 bps; closing below opening |
+| 9 | Shield curve: slow peak decay per day, full-slash drawdown | ≤ 10000; above the minimum crash and the base threshold |
+| 11 | Shield tuning: minimum crash, maximum crash, fast peak decay per day, volatility update interval | minimum above the recovery band and below the full-slash drawdown, at most the maximum; maximum and decay ≤ 10000; interval 1 second to 30 days |
+| 13 | In-kind fee: floor, deviation tax | protocol fee to 300 bps; ≤ 500 bps |
+| 14 | Redemption cooldown | ≤ 1 hour |
+| 16 | Basket size cap | current length to 50 |
+| 17 | Listing delay | ≤ 30 days |
+| 19 | Management fee per year | ≤ 200 bps; the fee accrued so far is minted at the previous rate first |
 
-This gives the community a window to:
-- Review the proposed asset's oracle reliability.
-- Verify Uniswap V3 liquidity for the asset.
-- Object publicly if necessary.
+Every value of a group is written at once; unused values must be zero; any other key reverts. `ParamUpdated` is emitted.
 
-### Immutable hard caps
+### `setAddress(key, address)`
 
-Every governable parameter is bounded **in code** by an immutable constant — governance can tune inside the envelope, never break it:
+| Key | Address | Constraint |
+|---|---|---|
+| 2 | Sequencer feed | Must have code, or be zero |
+| 3 | Fee recipient | Cannot be zero; the management fee accrued so far is minted to the current recipient first |
+| 5 | ETH price feed | Same decimals and declared identity as the current feed, answering with a live price |
+| 6 | Fill agent | Must have code or be zero; cannot be the vault; changing it closes an open fill first |
 
-| Parameter | Immutable hard cap |
-|---|---|
-| Total fee (`founderFeeBps + stabilityFeeBps`) | ≤ 5% (`HARD_MAX_FEE_BPS = 500`) — current soft cap `maxFeeBps` = 0.5%, live fees 0.1% |
-| Internal slippage (`maxInternalSlippage`) | ≤ 20% (`HARD_MAX_SLIPPAGE_BPS = 2000`) — live 5.5% |
-| Crash band (`minCrashBps`/`maxCrashBps`) | 3% – 90% (`HARD_MAX_CRASH_BPS = 9000`) |
-| Keeper bounty | ≤ 2% (`HARD_MAX_INCENTIVE_BPS = 200`) |
-| New asset weight (`MAX_NEW_ASSET_WEIGHT`) | ≤ 30% (3000 BPS) |
-| Basket size | ≤ 50 assets (`HARD_MAX_BASKET_SIZE`) |
-| Oracle timeout | ≤ 30 days (`HARD_MAX_ORACLE_TIMEOUT`) |
-| Min deposit | ≤ 1 ETH (`HARD_MAX_MIN_DEPOSIT`) |
+### Basket
 
-> The legacy `reserveBounds` (yield-drip floor/ceiling) was **removed in V6** — yield is now distributed instantly on every fee split.
+- `setBaseWeights(weights)`: one weight per row, sum at most 10000, zero for delisted rows.
+- `proposeAsset(token, oracle, isStable, baseWeight)`, with a base weight of at most 30%, then, after the listing delay, `executeAssetAddition(probe)`: the probe is pulled from the caller and must arrive in full, which rejects tokens that take a cut on transfer and keeps the vault from ever being empty. Decimals are read once and stored.
+- `assetAction(k, i)`: delist (1) sets the weights to zero and keeps the row in the NAV, to be sold through the auction; relist (2) reopens a delisted row with zero weight; abandon (3) quarantines a delisted row forever; it requires a feed that has given no price for seven days and refuses to leave the vault without a positive NAV, so that tokens sent to a dead row cannot keep it in the basket. The timelock's delay gives holders the time to redeem the row in kind first.
 
-### What governance CANNOT do
+### Ownership
 
-- ❌ Move user funds or mint GBLIN to arbitrary addresses.
-- ❌ Exceed any immutable hard cap above (e.g. fees > 5%, slippage > 20%, bounty > 2%).
-- ❌ Raise fees beyond the cap — fees are tunable via `setFees`, but only within `maxFeeBps` (≤ 5% hard cap); live fees are 0.05% founder + 0.05% stability.
-- ❌ Redirect the founder fee (only `founderWallet` itself can, via `onlyFounder`).
-- ❌ Pause the contract.
-- ❌ Upgrade the contract (non-upgradeable by design).
-- ❌ Renounce ownership — `renounceOwnership` was **removed in V6** (see below).
+`transferOwnership(newOwner)` sets a pending owner; the transfer completes only when the pending owner calls `acceptOwnership`. The zero address cancels a pending transfer. There is no `renounceOwnership`: a vault without an owner could not repoint a failing feed.
 
-## Perpetual, hard-capped governance (no renounce)
+## What the owner cannot do
 
-V6 **removed `renounceOwnership`** by design. Trust does **not** come from throwing the keys away — it comes from two things that hold forever:
+- Move holders' assets, mint shares to any address other than the fee recipient through the fee mechanism, or take assets out of the reserves.
+- Exceed any bound above.
+- Pause redemption in kind, which reads no feed and is not gated by the sentinel.
+- Upgrade the code: there is no proxy.
+- Act without the delay, once the handover to the timelock has executed: every owner call is a scheduled operation, and the schedule is public on the timelock before it lands.
 
-1. **The 48h Timelock Controller** owns the contract ([`0x6aBeC8…E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd)). Every `onlyOwner` action must be scheduled, wait 48 hours in public, then be executed — giving the community time to inspect and react.
-2. **The immutable hard caps** above, which no admin action can ever exceed.
+## Listing rule
 
-Renouncing would have frozen the basket and made oracles/router **un-repointable** — meaning the protocol could not survive a deprecated DEX router or a failing Chainlink feed over a multi-year horizon. Keeping bounded, timelocked governance lets GBLIN adapt its infrastructure for decades **without ever being able to rug holders**.
-
-## Founder Fee
-
-The founder fee (0.05% of every mint) goes to `founderWallet`. The wallet can be updated only by the wallet itself (`onlyFounder`), preventing the owner from redirecting it.
-
-If the ETH transfer to `founderWallet` fails, the fee is reconverted to WETH and added to the stability fund — never lost.
+An asset is listed only if it delivers the whole amount it is asked to transfer, without a fee or a reduction, for as long as it stays in the basket. Redemption relies on it: the vault trusts a token's `transfer` return value on the way out rather than re-reading balances, so that the call that must always succeed has no new way to fail.

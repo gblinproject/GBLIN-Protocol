@@ -1,0 +1,22 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.37"
+optimizer = true
+optimizer_runs = 1
+via_ir = true
+evm_version = "cancun"
+# No CBOR metadata is appended to the bytecode, so the deployed code does not depend on the
+# metadata hash of the sources. Verification recompiles with these same settings.
+cbor_metadata = false
+bytecode_hash = "none"
+
+[fuzz]
+runs = 20000
+
+[invariant]
+runs = 1000
+depth = 1000
+fail_on_revert = false
+shrink_run_limit = 5000

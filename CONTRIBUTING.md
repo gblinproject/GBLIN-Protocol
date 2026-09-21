@@ -46,21 +46,21 @@ Where `type` is one of: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
 
 Requirements:
 - Node.js ≥ 18
-- Foundry or Hardhat
+- Foundry
 - Solidity ^0.8.20
 
 ```bash
 git clone https://github.com/gblinproject/GBLIN-Protocol
 cd GBLIN-Protocol
 forge install     # or npm install
-forge test        # or npm test
+forge build
 ```
 
 ## Style Guide
 
 - **Solidity**: follow the [official style guide](https://docs.soliditylang.org/en/latest/style-guide.html).
 - **Comments**: use NatSpec for all public/external functions.
-- **Tests**: name files `*.t.sol` (Foundry) or `*.test.ts` (Hardhat).
+- **Tests**: name files `*.t.sol`.
 
 ## Licensing
 

@@ -32,7 +32,7 @@ What actually happened. Include error messages, transaction hashes, BaseScan lin
 ## Environment
 
 - Network: Base Mainnet
-- Contract version: V5
+- Contract: the vault in service (`0xc2181d975c05c8c724b334bcED0764c0b86B1D53`) or a previous deployment (state which)
 - Tx hash (if applicable):
 - Wallet/RPC used:
 

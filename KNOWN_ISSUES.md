@@ -7,12 +7,14 @@ stands. It exists so that researchers can see what has already been reported bef
 Findings are listed whether or not we agreed with the reporter's severity. Where a reporter corrected us,
 that is recorded too.
 
-**Contract status.** The deployed contract is not upgradeable — there is no proxy, and code cannot be
-changed in place. Parameters are governance-settable within immutable hard caps, through a 48h timelock
-(`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`). This means a code-level fix requires a migration to a new
-contract, while a parameter-level mitigation can be applied on the live deployment after the 48h delay.
+**Contract status.** The findings below were reported against the previous contract
+(`0x36C81d7E1966310F305eA637e761Cf77F90852f0`). No deployed contract is upgradeable — there is no proxy, and code
+cannot be changed in place — so a code-level fix means a new deployment, while a parameter-level mitigation can be
+applied on a live deployment through the 48h timelock (`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`). The vault in
+service is `0xc2181d975c05c8c724b334bcED0764c0b86B1D53`; the status of each finding on it is in the section
+"Status on the vault in service" at the end.
 
-Last updated: 2026-08-05.
+Last updated: 2026-09-21.
 
 ---
 
@@ -20,12 +22,12 @@ Last updated: 2026-08-05.
 
 | # | Reported | Finding | Reporter's severity | Status |
 |---|---|---|---|---|
-| 1 | 2026-07-07 | Oracle-anchored min-out with no pool price limit on internal swaps | Medium | Accepted as a design observation; severity disputed with measured figures |
-| 2 | 2026-07-07 | NAV excludes a delisted asset while redemption pays it pro-rata (previous contract) | Medium | Confirmed; already resolved in the current contract |
-| 3 | 2026-07-23 | `buyGBLINInKind` does not collect the stability fee | — | Intentional by design; reporter accepted the explanation |
-| 4 | 2026-07-29 | Crash Shield redistributes slashed weight onto already-shielded assets | Medium | Counting logic confirmed; **our first impact assessment was wrong and the reporter corrected it** |
-| 5 | 2026-07-31 | Missing slippage floor in `sellGBLINForEth` when a feed is unusable | Low | Reproduced in full; fix planned for the next migration |
-| 6 | 2026-08-02 | The 20s sell cooldown is bypassed by minting and redeeming from two addresses | Found internally | Demonstrated, 6/6 tests; the round trip is not profitable on its own |
+| 1 | 2026-07-07 | Oracle-anchored min-out with no pool price limit on internal swaps | Medium | Accepted as a design observation; severity disputed with measured figures. Not applicable to the vault in service, which never swaps |
+| 2 | 2026-07-07 | NAV excludes a delisted asset while redemption pays it pro-rata (previous contract) | Medium | Confirmed; resolved |
+| 3 | 2026-07-23 | `buyGBLINInKind` does not collect the stability fee | — | Intentional by design; reporter accepted the explanation. The vault in service charges an in-kind fee |
+| 4 | 2026-07-29 | Crash Shield redistributes slashed weight onto already-shielded assets | Medium | Counting logic confirmed; **our first impact assessment was wrong and the reporter corrected it**. Closed in the vault in service |
+| 5 | 2026-07-31 | Missing slippage floor in `sellGBLINForEth` when a feed is unusable | Low | Reproduced in full; closed in the vault in service |
+| 6 | 2026-08-02 | The 20s sell cooldown is bypassed by minting and redeeming from two addresses | Found internally | Demonstrated, 6/6 tests; the round trip is not profitable on its own. Reduced in the vault in service |
 
 ---
 
@@ -193,6 +195,20 @@ recipient of the tokens rather than the caller, or drop the per-address cooldown
 does not depend on identity.
 
 ---
+
+## Status on the vault in service
+
+The findings above were reported against the previous contract. On the vault in service
+(`0xc2181d975c05c8c724b334bcED0764c0b86B1D53`):
+
+| # | Status |
+|---|---|
+| 1 | Not applicable: the vault never swaps. Swaps happen in the Zap, under the caller's own minimum and a TWAP band on the adapter. |
+| 2 | Closed by design: a delisted row keeps its balance in the NAV and is sold through the auction; redemption pays every row pro rata. |
+| 3 | Closed: in-kind deposits pay a floor of 0.50% plus a deviation tax; the protocol part is minted as shares and the rest stays in the vault. |
+| 4 | Closed: slashed weight goes only to stable rows that are at their peg and not shielded themselves. |
+| 5 | Closed by design: the exit to ETH is all or nothing in the Zap; no leg is ever sold without a bound. |
+| 6 | Reduced, and documented: the cooldown is written only for a minter who receives its own shares, so a deposit on someone's behalf cannot lock their exit; a transfer still bypasses it. Propagating the cooldown on transfers would let anyone close another holder's exit for the price of a dust mint, so it is not done. The remaining round trip costs the attacker the mint fees. |
 
 ## Reporting something not on this list
 

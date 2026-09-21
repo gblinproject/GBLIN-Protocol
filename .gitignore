@@ -24,3 +24,5 @@ build/
 
 # graphify (knowledge graph locale, non versionato)
 graphify-out/
+out/
+cache/

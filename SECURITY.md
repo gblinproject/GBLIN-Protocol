@@ -60,17 +60,23 @@ and this section will be updated before any such program is announced anywhere e
 
 - Issues already reported. **See [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md)** for the full list of findings
   reported so far, what we verified, and where each one stands — please check it before writing up.
-- Vulnerabilities in dependencies (OpenZeppelin, Chainlink, Uniswap V3) — please report directly to those maintainers.
+- Vulnerabilities in dependencies (OpenZeppelin, Solady, Chainlink, Uniswap V3, Aerodrome, CoW Protocol) — please report directly to those maintainers.
 - Issues requiring physical access to a user's device.
 - Social engineering attacks.
 
+## Review status
+
+This release has had no paid third-party audit. It was reviewed line by line by the maintainer and by three
+AI systems — Fable 5.1, Grok 4 (Expert) and ChatGPT (Thinking) — with reproducible reading tests; the
+testing campaigns and their limits are summarized in [`audits/README.md`](audits/README.md). Paid audits will
+follow as the protocol earns its own budget. Nothing here should be read as "audited".
+
 ## Supported Versions
 
-| Version | Supported |
+| Contract | Supported |
 |---|---|
-| V6 (current — `0x36C81d7E1966310F305eA637e761Cf77F90852f0`) | ✅ |
-| V5 (deprecated 2026-06) | ❌ |
-| V4 | ❌ |
-| V3 | ❌ |
+| Vault in service — `0xc2181d975c05c8c724b334bcED0764c0b86B1D53`, with its Lens, Zap and sentinel | ✅ |
+| Previous index contract — `0x36C81d7E1966310F305eA637e761Cf77F90852f0` | Reports accepted; no changes are possible on a deployed contract |
+| Older contracts | ❌ |
 
-Only the latest deployed version receives security updates.
+Only the vault in service receives changes, and only through a new deployment.
