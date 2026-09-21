@@ -20,6 +20,11 @@ fill agent. The vault itself is unchanged.
 - The agent's EIP-1271 signature is the `ComposableCoW` payload; order checks moved into the handler's `verify`,
   which also requires the order's `appData` to be one of the two registered for its row.
 
+### Fixed
+- The two conditional orders were registered again with `appData` whose hooks carry enough gas for the vault
+  in service (pre-hook 1,200,000, post-hook 700,000); the first `appData` gave 600,000 and 300,000 and the order book
+  rejected the orders. The contracts are unchanged.
+
 ### Deprecated
 - The first fill agent, `0xb78d74642E32e86D1d96330D047C6245a2bA7D5E`, deployed with the vault and never connected.
 

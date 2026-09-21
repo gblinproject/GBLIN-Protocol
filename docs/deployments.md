@@ -54,13 +54,16 @@ Read through `GBLINLens` at the addresses above.
 | Fill agent set to `CowFillAgent` (`setAddress(6, 0x0f4307A5Eb7D33d04Cb68fb0bA4d47a56C7E2fc8)`) | [`0xf06a5aaf…`](https://basescan.org/tx/0xf06a5aafc638a7fec40e0c365cb2e24eda7031423e4b8eeda3780d4e3f4d66a3), block 51616061 |
 | Conditional order registered with `ComposableCoW` for row 0 (cbBTC) | [`0xaa12c6b5…`](https://basescan.org/tx/0xaa12c6b589d5f2d79ba674479969e124f0287d90c4d020af731f9ac404fa6065), block 51616080 |
 | Conditional order registered with `ComposableCoW` for row 2 (USDC) | [`0x675a6d3e…`](https://basescan.org/tx/0x675a6d3e91f3364f3827a5510f042bc486189c8aa32f75b5dde19f27f1d50de8), block 51616093 |
+| Both orders above removed: their `appData` gave the hooks too little gas for the vault in service | [`0xd0bdefe3…`](https://basescan.org/tx/0xd0bdefe35254ba213779eaa02f1eb31b6ca0773f5a48df3fb007340a6bb72dfb), block 51619359; [`0xa71496d7…`](https://basescan.org/tx/0xa71496d7be46a0e8d91ee08a6aa5b03a64146516f10eb93f453a132f8f3962dd), block 51619371 |
+| Conditional order registered for row 0 (cbBTC), current | [`0x9ac6a05e…`](https://basescan.org/tx/0x9ac6a05e5dd8b904e7e981660f4be8e7e1f6b8d6271a9a1b9f6d7f9885ae4792), block 51619383 |
+| Conditional order registered for row 2 (USDC), current | [`0xe6c0342d…`](https://basescan.org/tx/0xe6c0342d351a27b7dc87191aaabd2c61b278f61e1198438394f3be6962a8555b), block 51619395 |
 
-Each conditional order uses `GblinAuctionOrder` as handler, the row index as salt and a five-minute bucket. Its static input carries the two `appData` hashes of the row — one for the side on which the vault buys the asset, one for the side on which it sells it. Each `appData` document carries the pre-hook `openFill(row, side)` on the fill agent and the post-hook `refreshWeights()` on the vault, and is registered with the CoW Protocol order book.
+Each conditional order uses `GblinAuctionOrder` as handler, the row index as salt and a five-minute bucket. Its static input carries the two `appData` hashes of the row — one for the side on which the vault buys the asset, one for the side on which it sells it. Each `appData` document carries the pre-hook `openFill(row, side)` on the fill agent with a gas limit of 1,200,000 and the post-hook `refreshWeights()` on the vault with 700,000, and is registered with the CoW Protocol order book. The first registration gave the hooks 600,000 and 300,000: on the vault in service `openFill` uses about 822,000 gas and `refreshWeights` with a fill to close about 420,000, so the pre-hook ran out of gas inside the hooks trampoline, which ignores a failing hook, and the order book rejected the signature. The limits are what a solver reserves; only the gas used is spent.
 
 | Row | Order id (`keccak256(abi.encode(params))`) | `appData`, vault buys | `appData`, vault sells |
 |---|---|---|---|
-| 0 (cbBTC) | `0x1daa586c91aa9f96d9b36a647e2346a5fc0aefe878663662f0648a0c75c2ecc0` | `0xf31eff837a3036b8c76f6924b0d8b4a2fd71d763a8df9ce642e8b309d8e1c361` | `0xeafb96f22480e558cbf4a041916a4c342e1d3240bb662b6182ab9f06a2930f20` |
-| 2 (USDC) | `0xaf3892e326c5488026fef0d4bcce58180c0413ae9c47edb7d16f8824e8e57aa8` | `0xd857ce0ad1d4c3651c0be5526a74d44d1ee25b0c0702eb32c5002fa25b86e3a3` | `0xdc11da026347dbc430b9bceed488b0a47401a1eb8aac81e98f649b311116da8a` |
+| 0 (cbBTC) | `0xdf7d1a6b8322073b65703984360115827a24b0a878b42955e44287d864f6b8f0` | `0x9787a156235886f83fd0941b2b8847f35a011f3aea19ad9e19517f35a5fd5b6e` | `0xffa3df1f7858acd7be9b840afab564bd481fba255a6b9005db6b2344e14899df` |
+| 2 (USDC) | `0x2cb967d8ab6ecaed30bbccc291c63480d7dff0ddb1f0b634409e1d67f12feb48` | `0xe8793fae38acbfc00432d8d3eaa455e3405b41e9b836921ec3089e81972caeba` | `0x7556318001887d62acd04d25d03f4a32e135d7f4f7b6918d29179df3ded7671b` |
 
 ### Ownership
 
