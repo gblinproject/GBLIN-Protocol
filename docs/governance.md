@@ -1,18 +1,18 @@
 # Governance
 
-GBLIN has no governance token, no vote and no off-chain proposal system. The vault has one owner, meant to be a 48-hour timelock, and every owner action is bounded in code. Trust rests on two things that hold for the life of the vault: the delay, which gives holders time to leave before any change lands, and the bounds, which no change can exceed.
+GBLIN has no governance token, no vote and no off-chain proposal system. The vault has one owner, a 48-hour timelock, and every owner action is bounded in code. Trust rests on two things that hold for the life of the vault: the delay, which gives holders time to leave before any change lands, and the bounds, which no change can exceed.
 
 ## Roles
 
 | Role | Address | Powers |
 |---|---|---|
-| Owner (timelock, `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`, pending until the scheduled acceptance executes) | 48-hour delay, 14-day grace, open executor | Parameters, addresses, base weights, asset listing and delisting, ownership transfer |
+| Owner (timelock, `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`, since 2026-09-22) | 48-hour delay, 14-day grace, open executor | Parameters, addresses, base weights, asset listing and delisting, ownership transfer |
 | Proposer on the timelock | `0x9FFa542E369C53af62380296092EC669f329a9ee` | Schedules operations |
 | Canceller on the timelock | `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA` | Cancels scheduled operations |
 | Fee recipient | `0x9FFa542E369C53af62380296092EC669f329a9ee` | Receives the protocol and management fees as shares; changed only by the owner |
 | Sentinel guardian | `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA` | Reports the sequencer down for a bounded stretch |
 
-The deployer holds ownership of the vault and the sentinel until the scheduled `acceptOwnership` operations execute; the state is public through `pendingOwner()` and the timelock, and through `get_governance_state` in the MCP server.
+The vault and the sentinel have been owned by the timelock since 2026-09-22, when the scheduled `acceptOwnership` operations executed; the state is public through `owner()` and `pendingOwner()`, and through `get_governance_state` in the MCP server.
 
 ## What the owner can do, and within what bounds
 

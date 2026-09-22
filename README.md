@@ -130,7 +130,7 @@ This lets an agent pay in GBLIN over a facilitator the way it pays in USDC, with
 
 ## 10. Governance
 
-The owner of the vault is meant to be the 48-hour timelock at `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd` (minimum delay 172,800 seconds, grace period 14 days, open executor, proposer and canceller roles held by separate addresses). Ownership moves in two steps: `transferOwnership` by the current owner, then `acceptOwnership` by the new one; for the timelock, the acceptance is itself a scheduled operation. The deployer holds ownership until that operation executes; `get_governance_state` in the MCP server and `pendingOwner()` on the vault report the state.
+The owner of the vault is the 48-hour timelock at `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd` (minimum delay 172,800 seconds, grace period 14 days, open executor, proposer and canceller roles held by separate addresses). Ownership moved in two steps: `transferOwnership` by the deployer, then `acceptOwnership` by the timelock, which for a timelock is itself a scheduled operation; it executed on 2026-09-22. From that point every owner action passes through the 48-hour delay. `get_governance_state` in the MCP server and `owner()` and `pendingOwner()` on the vault report the state.
 
 Every parameter is set through `setParam(key, values)` with hard bounds enforced in code:
 

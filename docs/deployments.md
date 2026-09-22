@@ -69,11 +69,11 @@ Each conditional order uses `GblinAuctionOrder` as handler, the row index as sal
 
 | | |
 |---|---|
-| Owner | `0x9FFa542E369C53af62380296092EC669f329a9ee` (deployer) |
-| Pending owner | `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd` (timelock) |
-| Scheduled acceptance | operation `0x1873b690cb95ce706938a223da20047db73a49e7b1ab23021665e5b6502a9c27` on the timelock, executable from 2026-09-22 16:16:31 UTC by anyone, within the 14-day grace period |
+| Owner | `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd` (48-hour timelock) |
+| Pending owner | none |
+| Acceptance | operation `0x1873b690cb95ce706938a223da20047db73a49e7b1ab23021665e5b6502a9c27` on the timelock, executed on 2026-09-22 at 21:01 UTC in transaction `0x366dc55dfe1fc3a1eb662a245ed7f5e6b54c68a0621124eafe5cf14188a2503c` (block 51660727) |
 
-The `SequencerSentinel` has the same owner and pending owner; its acceptance is operation `0x10f3299fd0a5313a3146f4577946b599fb1f25a304c428e5e1c57a51fe17a4b7`. The sentinel's guardian is `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA`, which also holds the canceller role on the timelock.
+The `SequencerSentinel` is owned by the same timelock and has no pending owner; its acceptance, operation `0x10f3299fd0a5313a3146f4577946b599fb1f25a304c428e5e1c57a51fe17a4b7`, executed in transaction `0xe4f4842a682ff3d9b89b10cbc0de878ed01893aefa88d21228fe6700b17df165` (block 51660741). The sentinel's guardian is `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA`, which also holds the canceller role on the timelock.
 
 ## Timelock
 
