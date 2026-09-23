@@ -100,6 +100,16 @@ relayer → GBLIN.transferWithAuthorization(..., signature)
   → transfer; emit AuthorizationUsed
 ```
 
+With the GBLIN relay (an off-chain service, not part of the contracts), the payer signs a second authorization for the relay fee, and both travel in one transaction:
+
+```
+relay → Multicall3.aggregate3([
+          GBLIN.transferWithAuthorization(payment, signature),   allowFailure = false
+          GBLIN.transferWithAuthorization(fee, signature),       allowFailure = false
+        ])
+  → both transfers settle, or the whole transaction reverts
+```
+
 ## Storage and immutables
 
 The basket is a dynamic array of rows, each packed into a fixed number of slots read by the Lens. Addresses that never change — WETH, the adapters' venues — are immutables, so the deployed bytecode differs from a fresh build only in those values. There is no proxy and no upgrade path: a successor is a new deployment, and holders move by redeeming in kind and minting again.

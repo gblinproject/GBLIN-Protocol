@@ -126,7 +126,9 @@ The shield refreshes on every mint, redemption, bid and on `refreshWeights()`, w
 
 The share implements EIP-3009: `transferWithAuthorization`, `receiveWithAuthorization` and `cancelAuthorization`, with signatures either as `(v, r, s)` or as bytes, which also admits ERC-1271 contract signatures. The EIP-712 domain is `Global Balanced Liquidity Index`, version `1`, exposed by `eip712Domain()` (EIP-5267). An authorization is single-use and time-bounded; a replay reverts.
 
-This lets an agent pay in GBLIN over a facilitator the way it pays in USDC, without holding ETH for gas. Transfers by signature carry no fee.
+This lets an agent pay in GBLIN over a facilitator the way it pays in USDC, without holding ETH for gas. Transfers by signature carry no fee in the contract.
+
+Anyone can carry a `transferWithAuthorization` on chain. When the payee or a facilitator does not, the GBLIN relay at `https://gblin.digital/api/relay/gblin` does: the payer signs the payment and a second transfer for the relay's fee, quoted in GBLIN at the NAV, and the relay submits both in one Multicall3 transaction, so both settle or neither does. The fee is charged by that service, not by the contract.
 
 ## 10. Governance
 
@@ -195,7 +197,7 @@ jq -r .deployedBytecode.object out/GBLIN.sol/GBLIN.json
 ## Links
 
 - Website and application: [gblin.digital](https://gblin.digital)
-- Agent documentation and MCP server: [gblin.digital/agents](https://gblin.digital/agents) · [`@gblin-protocol/mcp-server`](https://www.npmjs.com/package/@gblin-protocol/mcp-server)
+- Agent documentation and MCP server: [gblin.digital/agents](https://gblin.digital/agents) · [`@gblin-protocol/mcp-server`](https://www.npmjs.com/package/@gblin-protocol/mcp-server) · hosted, no install: `https://gblin-mcp.gblin-mcp-worker.workers.dev/mcp`
 - Previous deployments: [`legacy/`](legacy/) and [`docs/deployments.md`](docs/deployments.md)
 
 MIT © GBLIN Protocol
