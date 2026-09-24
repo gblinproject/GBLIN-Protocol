@@ -155,7 +155,7 @@ Every parameter is set through `setParam(key, values)` with hard bounds enforced
 
 `setAddress(key, address)` sets the sequencer feed (2), the fee recipient (3), the ETH price feed (5) and the fill agent (6); a new ETH feed must have the same decimals and declared identity as the current one and answer with a live price, and a new fee recipient receives the management fee accrued so far before it changes. `setBaseWeights` sets the target weights. Assets enter through `proposeAsset`, with a base weight of at most 30%, and, after the listing delay, `executeAssetAddition`, which pulls a probe of the asset so the vault is never empty and rejects tokens that do not deliver the exact amount. `assetAction` delists, relists or abandons a row: a delisted row keeps its balance in NAV and is sold through the auction; an abandoned row is quarantined forever; abandoning requires a delisted row whose feed has given no price for seven days, and the NAV must stay positive afterwards.
 
-What governance cannot do: move holders' assets, mint shares to itself, exceed a bound above, pause redemptions, upgrade the code, or act without the timelock's delay once the handover has executed. Details: [`docs/governance.md`](docs/governance.md).
+What governance cannot do: move holders' assets, mint shares to itself, exceed a bound above, pause redemptions, upgrade the code, or act without the timelock's delay. Details: [`docs/governance.md`](docs/governance.md).
 
 ## 11. Sequencer sentinel
 
@@ -171,7 +171,7 @@ These hold by construction and are exercised by the test campaigns described in 
 - A bid never moves a row past its target and never uses WETH the vault does not hold.
 - Fees are minted, never taken out of the reserves; the management fee is accrued at the old rate before the rate changes.
 - The supply never returns to zero.
-- Every governance change stays within its bound and, once the handover has executed, waits 48 hours.
+- Every governance change stays within its bound and waits 48 hours.
 
 ## 13. Security
 

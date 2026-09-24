@@ -62,7 +62,7 @@ Every value of a group is written at once; unused values must be zero; any other
 - Exceed any bound above.
 - Pause redemption in kind, which reads no feed and is not gated by the sentinel.
 - Upgrade the code: there is no proxy.
-- Act without the delay, once the handover to the timelock has executed: every owner call is a scheduled operation, and the schedule is public on the timelock before it lands.
+- Act without the delay: every owner call is a scheduled operation, and the schedule is public on the timelock before it lands.
 
 ## Listing rule
 
