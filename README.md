@@ -198,6 +198,8 @@ jq -r .deployedBytecode.object out/GBLIN.sol/GBLIN.json
 
 - Website and application: [gblin.digital](https://gblin.digital)
 - Agent documentation and MCP server: [gblin.digital/agents](https://gblin.digital/agents) · [`@gblin-protocol/mcp-server`](https://www.npmjs.com/package/@gblin-protocol/mcp-server) · hosted, no install: `https://gblin-mcp.gblin-mcp-worker.workers.dev/mcp`
+- Agent treasury: [`@gblin-protocol/agent-treasury`](https://www.npmjs.com/package/@gblin-protocol/agent-treasury) — library and CLI that keep an agent's operating cash in USDC, hold the surplus in shares and redeem them for USDC before an x402 payment. It uses the Zap for both directions; it is not part of the protocol and holds no privilege in the vault.
+- Agent HTTP API: [gblin.digital/api/x402/llms.txt](https://gblin.digital/api/x402/llms.txt) — state, quotes and calldata are free; the signed risk attestation, action receipts and catalogue liveness are paid over x402.
 - Previous deployments: [`legacy/`](legacy/) and [`docs/deployments.md`](docs/deployments.md)
 
 MIT © GBLIN Protocol
