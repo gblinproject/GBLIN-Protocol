@@ -63,7 +63,7 @@ Each reviewer received a numbered listing of the sources, a closed perimeter of 
 
 ## What this is not
 
-None of the above is an audit in the sense the word is used by audit firms, and the protocol does not describe itself as audited. The reviews were made by the people who wrote the code and by tools that can be wrong. The bounds that hold regardless of review are in the code and listed in [`docs/governance.md`](../docs/governance.md).
+None of the above is an audit in the sense the word is used by audit firms, and the protocol does not describe itself as audited. The reviews were made by the people who wrote the code and by tools that can be wrong. The bounds that hold regardless of review are in the code and listed in [`docs/governance.md`](../docs/governance.md). The first use of protocol revenue will be a full audit by an established firm.
 
 ## Reporting
 

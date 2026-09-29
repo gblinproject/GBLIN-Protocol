@@ -66,10 +66,10 @@ and this section will be updated before any such program is announced anywhere e
 
 ## Review status
 
-This release has had no paid third-party audit. It was reviewed line by line by the maintainer and by three
+This release has had no paid third-party audit. It was reviewed line by line by the maintainer, Roberto Parise, and by three
 AI systems — Fable 5.1, Grok 4 (Expert) and ChatGPT (Thinking) — with reproducible reading tests; the
-testing campaigns and their limits are summarized in [`audits/README.md`](audits/README.md). Paid audits will
-follow as the protocol earns its own budget. Nothing here should be read as "audited". The fill agent and the
+testing campaigns and their limits are summarized in [`audits/README.md`](audits/README.md). The first use of protocol revenue will be a full audit by an established firm.
+Nothing here should be read as "audited". The fill agent and the
 order generator were added after the launch; the reviews and test campaigns they have been through since
 are listed in the same file.
 

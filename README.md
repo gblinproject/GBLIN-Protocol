@@ -10,6 +10,8 @@ GBLIN is a non-custodial index of cbBTC, WETH and USDC on Base. Shares are minte
 
 This document is the specification. What is true is here and on-chain; when the two disagree, the chain wins.
 
+GBLIN is built and maintained by Roberto Parise.
+
 ## Contents
 
 1. [Deployment](#1-deployment)
@@ -175,7 +177,7 @@ These hold by construction and are exercised by the test campaigns described in 
 
 ## 13. Security
 
-This release has had no paid third-party audit. It was reviewed line by line by the maintainer and by three AI systems — Fable 5.1, Grok 4 (Expert) and ChatGPT (Thinking) — with reproducible reading tests; the campaigns of unit, fuzz, invariant, fork, mutation and symbolic testing are summarized in [`audits/README.md`](audits/README.md), together with what was not done. Paid audits will follow as the protocol earns its own budget.
+This release has had no paid third-party audit. It was reviewed line by line by the maintainer, Roberto Parise, and by three AI systems — Fable 5.1, Grok 4 (Expert) and ChatGPT (Thinking) — with reproducible reading tests; the campaigns of unit, fuzz, invariant, fork, mutation and symbolic testing are summarized in [`audits/README.md`](audits/README.md), together with what was not done. The first use of protocol revenue will be a full audit by an established firm.
 
 Reports of vulnerabilities: [`SECURITY.md`](SECURITY.md). Findings reported so far and their status: [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md).
 
