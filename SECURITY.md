@@ -70,8 +70,8 @@ This release has had no paid third-party audit. It was reviewed line by line by 
 AI systems — Fable 5.1, Grok 4 (Expert) and ChatGPT (Thinking) — with reproducible reading tests; the
 testing campaigns and their limits are summarized in [`audits/README.md`](audits/README.md). Paid audits will
 follow as the protocol earns its own budget. Nothing here should be read as "audited". The fill agent and the
-order generator were added after the launch and have not been through the AI reviews; what they have been through
-is listed in the same file.
+order generator were added after the launch; the reviews and test campaigns they have been through since
+are listed in the same file.
 
 ## Supported Versions
 
