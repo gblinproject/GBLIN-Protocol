@@ -50,7 +50,7 @@ Every value of a group is written at once; unused values must be zero; any other
 
 - `setBaseWeights(weights)`: one weight per row, sum at most 10000, zero for delisted rows.
 - `proposeAsset(token, oracle, isStable, baseWeight)`, with a base weight of at most 30%, then, after the listing delay, `executeAssetAddition(probe)`: the probe is pulled from the caller and must arrive in full, which rejects tokens that take a cut on transfer and keeps the vault from ever being empty. Decimals are read once and stored.
-- `assetAction(k, i)`: delist (1) sets the weights to zero and keeps the row in the NAV, to be sold through the auction; relist (2) reopens a delisted row with zero weight; abandon (3) quarantines a delisted row forever; it requires a feed that has given no price for seven days and refuses to leave the vault without a positive NAV, so that tokens sent to a dead row cannot keep it in the basket. The timelock's delay gives holders the time to redeem the row in kind first.
+- `assetAction(k, i)`: delist (1) sets the weights to zero and keeps the row in the NAV, to be sold through the auction; relist (2) reopens a delisted row with zero weight; abandon (3) quarantines a delisted row forever; it requires a feed with no usable price at the time of the call (no answer within 26 hours, or an answer at a bound of the aggregator) and price peaks that have not moved for seven days, which for a delisted row means seven days since the delisting or since its last oracle replacement, and refuses to leave the vault without a positive NAV, so that tokens sent to a dead row cannot keep it in the basket. The timelock's delay gives holders the time to redeem the row in kind first.
 
 ### Ownership
 

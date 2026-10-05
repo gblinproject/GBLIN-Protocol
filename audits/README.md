@@ -11,7 +11,7 @@ This directory records what has been done to check the GBLIN contracts, and what
 | Static analysis | Slither and Aderyn; every reported item read individually, none accepted as a defect | Slither: [report](./2026-06-28_slither_GBLIN_V6.md), 0 critical / 0 high |
 | Unit and fuzz tests | 591 tests in the internal suite, the 57 of the fill agent below included; fuzzing at 20,000 runs | — |
 | Invariant tests | 13 invariants, 1,000,000 operations each | — |
-| Fork tests against the live pools and feeds | 132 tests at Base block 51,340,251, including attack scenarios: inflation, reentrancy, sandwiches on the auction, feed drift, token blacklists, dust | — |
+| Fork tests against the live pools and feeds | 92 tests at Base block 51,340,251, including attack scenarios: inflation, reentrancy, sandwiches on the auction, feed drift, token blacklists, dust | — |
 | Coverage-guided fuzzing (Medusa) | 6 hours, 624,814 calls, 66,252 branches, 46 properties, 0 failures | — |
 | Mutation testing (slither-mutate), `GBLIN` and the first fill agent | Partial, stopped at a time cap: 261 mutants caught, 6 not caught by the suite frozen at the start of the campaign, 349 not compiling. The six have since been settled (below) | — |
 | Symbolic execution (Halmos) | 12 properties: 3 proved, 9 undecided within the solver budget, 0 counterexamples | — |

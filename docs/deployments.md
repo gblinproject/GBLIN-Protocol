@@ -26,7 +26,7 @@ Constructor arguments: `GblinAuctionOrder(vault, lens)`; `CowFillAgent(vault, se
 
 ### Parameters at launch
 
-Read through `GBLINLens` at the addresses above.
+Read through `GBLINLens` at the addresses above. The vault was created with the defaults written in the code and configured by 33 `setParam` transactions from the deployer between blocks 51563358 and 51565793, before ownership passed to the timelock. Two of the values below differ from the code defaults: the auction cap (25 bps; default 50) and the listing delay (86,400 s; default 172,800). No parameter has changed since.
 
 | Group | Values |
 |---|---|

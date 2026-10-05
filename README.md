@@ -56,7 +56,7 @@ The vault holds the assets and the shares. Everything that needs a price, a swap
 | `GBLINLens` | Read-only views: quotes, configuration, basket rows, auction state, pending withdrawals, cooldowns. Takes the vault as its first argument. |
 | `GBLINZap` | Mints with any token and exits to ETH. It swaps on an adapter and mints or redeems on the vault in the same call. The vault itself never touches a pool. |
 | `SequencerSentinel` | Passes the L2 sequencer uptime feed through and lets a guardian report the sequencer down. While down, the vault refuses mints and auction fills; redemptions are not affected. |
-| `UniswapV3Adapter`, `AerodromeAdapter` | Swap adapters used by the Zap, with a TWAP band that refuses a pool price too far from the oracle. |
+| `UniswapV3Adapter`, `AerodromeAdapter` | Swap adapters used by the Zap, with a TWAP band that refuses a swap while the pool's current price is too far from its own time-weighted average. |
 | `CowFillAgent` | The vault's fill agent: lets CoW Protocol solvers fill the auction inside a settlement, at the auction price or better. Its signature check is delegated to CoW Protocol's `ComposableCoW`. |
 | `GblinAuctionOrder` | Conditional order of CoW Protocol's programmatic order framework: for one basket row it cuts, from the vault's live state, the order a solver can settle against the auction, and at settlement it accepts that order only against the fill opened in the same block. |
 
@@ -66,7 +66,7 @@ Sources: [`src/`](src/). Interfaces with full NatSpec: [`src/interfaces/`](src/i
 
 The value of the vault is the sum of every basket row priced by its Chainlink feed, in ETH. The NAV of a share is that value divided by the supply. `navPerShare(0)` and `totalEthValue(0)` expose it; `isNavReliable()` says whether the vault can price itself right now.
 
-A row is priced only while its feed answers with a positive value within its allowed age — the pricing age, 2 hours at launch, or 26 hours for the feed of a stable asset, which updates less often — and its token answers `balanceOf`. A row that cannot be priced counts as zero in the NAV and loses its weight until the price returns; mints and quotes are refused while any row is in that state, so a deposit cannot be priced against a hole. Mints and bids move value at a price and require fresher feeds: 30 minutes at launch for the feeds of non-stable assets.
+A row is priced only while its feed answers with a positive value within its allowed age — the pricing age, 2 hours at launch, or 26 hours for the feed of a stable asset, which updates less often — and its token answers `balanceOf`. A row that cannot be priced counts as zero in the NAV and loses its weight until the price returns; mints and quotes are refused while any row is in that state, so a deposit cannot be priced against a hole. Mints are priced within the pricing age. Auction fills move value at a price and require fresher feeds: the trading age, 30 minutes at launch, for the feeds of non-stable assets.
 
 The first mint sets the scale: the value already in the vault divided by one million virtual shares. A small seed of shares is held by an address without a key, so the supply never returns to zero and the scale is anchored for the life of the vault.
 
@@ -120,9 +120,9 @@ Delisted rows carry no weight and are sold through the same auction. The auction
 
 ## 8. Crash shield
 
-For every row the shield keeps two decaying price peaks — a fast one (0.5% per day at launch) and a slow one (0.15% per day). When the drawdown from the higher of the two exceeds a volatility-adjusted threshold (base 15%, bounded between 15% and 50%), the row's weight is cut in proportion to how far the drawdown has moved from the threshold toward the full-slash drawdown (30%), down to the share kept at full severity (20%). The weight removed goes, in equal parts, to stable rows that are at their peg and not shielded themselves; without such rows it stays in WETH. The shield deactivates only when the drawdown falls back within the recovery band (8%).
+For every row the shield keeps two decaying price peaks — a fast one (0.5% per day at launch) and a slow one (0.15% per day). When the drawdown from the higher of the two exceeds a volatility-adjusted threshold (base 15%, bounded between 15% and 50% and never above the full-slash drawdown), the row's weight is cut in proportion to how far the drawdown has moved from the threshold toward the full-slash drawdown (30%), down to the share kept at full severity (20%). The weight removed goes, in equal parts, to stable rows that are at their peg and not shielded themselves; without such rows it stays in WETH. The cut follows the drawdown in both directions: it shrinks as the drawdown falls back toward the threshold and is gone once the drawdown is below it. The recovery band (8%) only decides when the row is reported as recovered (`CrashShieldDeactivated`).
 
-The shield refreshes on every mint, redemption, bid and on `refreshWeights()`, which anyone can call. Its full parameter set is exposed by `GBLINLens.configShield(vault)` and the arithmetic lives in [`ShieldLib`](src/libraries/ShieldLib.sol).
+The shield refreshes on every mint, auction fill and on `refreshWeights()`, which anyone can call; a redemption reads no price and leaves it to the next call that does. Its full parameter set is exposed by `GBLINLens.configShield(vault)` and the arithmetic lives in [`ShieldLib`](src/libraries/ShieldLib.sol).
 
 ## 9. Payments by signature
 
@@ -140,7 +140,7 @@ Every parameter is set through `setParam(key, values)` with hard bounds enforced
 
 | Key | Group | Bounds |
 |---|---|---|
-| 2 | Shield: base threshold, volatility multiplier, recovery band, slash multiplier | threshold below the full slash; multiplier ≤ 100000; band below the minimum crash; slash ≤ 10000 |
+| 2 | Shield: base threshold, volatility multiplier, recovery band, slash multiplier | threshold above zero and below the full slash; multiplier ≤ 100000; band below the minimum crash; slash ≤ 10000 |
 | 3 | Mint fees: protocol, stability | sum ≤ 100 bps; protocol ≤ in-kind floor |
 | 4 | Auction: start discount, cap, ramp | 1–300 bps; ≤ 300 bps; 1 minute to 30 days |
 | 5 | Minimum deposit | ≤ 10 ETH |
@@ -155,7 +155,7 @@ Every parameter is set through `setParam(key, values)` with hard bounds enforced
 | 17 | Listing delay | ≤ 30 days |
 | 19 | Management fee per year | ≤ 200 bps; accrued at the previous rate first |
 
-`setAddress(key, address)` sets the sequencer feed (2), the fee recipient (3), the ETH price feed (5) and the fill agent (6); a new ETH feed must have the same decimals and declared identity as the current one and answer with a live price, and a new fee recipient receives the management fee accrued so far before it changes. `setBaseWeights` sets the target weights. Assets enter through `proposeAsset`, with a base weight of at most 30%, and, after the listing delay, `executeAssetAddition`, which pulls a probe of the asset so the vault is never empty and rejects tokens that do not deliver the exact amount. `assetAction` delists, relists or abandons a row: a delisted row keeps its balance in NAV and is sold through the auction; an abandoned row is quarantined forever; abandoning requires a delisted row whose feed has given no price for seven days, and the NAV must stay positive afterwards.
+`setAddress(key, address)` sets the sequencer feed (2), the fee recipient (3), the ETH price feed (5) and the fill agent (6); a new ETH feed must have the same decimals and declared identity as the current one and answer with a live price, and a new fee recipient receives the management fee accrued so far before it changes. `setBaseWeights` sets the target weights. Assets enter through `proposeAsset`, with a base weight of at most 30%, and, after the listing delay, `executeAssetAddition`, which pulls a probe of the asset so the vault is never empty and rejects tokens that do not deliver the exact amount. `assetAction` delists, relists or abandons a row: a delisted row keeps its balance in NAV and is sold through the auction; an abandoned row is quarantined forever; abandoning requires a delisted row whose feed gives no usable price at the time of the call (no answer within 26 hours, or an answer at a bound of the aggregator) and whose price peaks have not moved for seven days, which for a delisted row means seven days since the delisting or since its last oracle replacement; the NAV must stay positive afterwards.
 
 What governance cannot do: move holders' assets, mint shares to itself, exceed a bound above, pause redemptions, upgrade the code, or act without the timelock's delay. Details: [`docs/governance.md`](docs/governance.md).
 

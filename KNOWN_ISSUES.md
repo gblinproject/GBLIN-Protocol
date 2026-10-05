@@ -14,7 +14,7 @@ applied on a live deployment through the 48h timelock (`0x6aBeC8716fFeEcf7C3D6e6
 service is `0xc2181d975c05c8c724b334bcED0764c0b86B1D53`; the status of each finding on it is in the section
 "Status on the vault in service" at the end.
 
-Last updated: 2026-09-21.
+Last updated: 2026-10-05.
 
 ---
 
@@ -207,7 +207,7 @@ The findings above were reported against the previous contract. On the vault in 
 | 2 | Closed by design: a delisted row keeps its balance in the NAV and is sold through the auction; redemption pays every row pro rata. |
 | 3 | Closed: in-kind deposits pay a floor of 0.50% plus a deviation tax; the protocol part is minted as shares and the rest stays in the vault. |
 | 4 | Closed: slashed weight goes only to stable rows that are at their peg and not shielded themselves. |
-| 5 | Closed by design: the exit to ETH is all or nothing in the Zap; no leg is ever sold without a bound. |
+| 5 | Closed by design: the exit to ETH is all or nothing in the Zap. Each leg is sold under the adapter's TWAP band, which compares the pool's current price with its own time-weighted average, and the price bound applies to the whole exit: the caller's minimum and, while the vault can price itself, the NAV value of the shares less the Zap's slippage bound. |
 | 6 | Reduced, and documented: the cooldown is written only for a minter who receives its own shares, so a deposit on someone's behalf cannot lock their exit; a transfer still bypasses it. Propagating the cooldown on transfers would let anyone close another holder's exit for the price of a dust mint, so it is not done. The remaining round trip costs the attacker the mint fees. |
 
 ## Reporting something not on this list
