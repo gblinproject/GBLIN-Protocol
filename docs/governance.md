@@ -7,8 +7,7 @@ GBLIN has no governance token, no vote and no off-chain proposal system. The vau
 | Role | Address | Powers |
 |---|---|---|
 | Owner (timelock, `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`, since 2026-09-22) | 48-hour delay, 14-day grace, open executor | Parameters, addresses, base weights, asset listing and delisting, ownership transfer |
-| Proposer on the timelock | `0x9FFa542E369C53af62380296092EC669f329a9ee` | Schedules operations |
-| Canceller on the timelock | `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA` | Cancels scheduled operations |
+| Proposer and canceller on the timelock | `0xc7AeFcfC871bA51FA2ddfE3117b69AC055C98eF1` (Safe, 2 of 3 hardware signers, since 2026-10-07) | Schedules and cancels operations |
 | Fee recipient | `0x9FFa542E369C53af62380296092EC669f329a9ee` | Receives the protocol and management fees as shares; changed only by the owner |
 | Sentinel guardian | `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA` | Reports the sequencer down for a bounded stretch |
 

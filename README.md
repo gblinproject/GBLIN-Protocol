@@ -134,7 +134,7 @@ Anyone can carry a `transferWithAuthorization` on chain. When the payee or a fac
 
 ## 10. Governance
 
-The owner of the vault is the 48-hour timelock at `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd` (minimum delay 172,800 seconds, grace period 14 days, open executor, proposer and canceller roles held by separate addresses). Ownership moved in two steps: `transferOwnership` by the deployer, then `acceptOwnership` by the timelock, which for a timelock is itself a scheduled operation; it executed on 2026-09-22. From that point every owner action passes through the 48-hour delay. `get_governance_state` in the MCP server and `owner()` and `pendingOwner()` on the vault report the state.
+The owner of the vault is the 48-hour timelock at `0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd` (minimum delay 172,800 seconds, grace period 14 days, open executor, proposer and canceller roles held by a 2-of-3 Safe at `0xc7AeFcfC871bA51FA2ddfE3117b69AC055C98eF1` since 2026-10-07). Ownership moved in two steps: `transferOwnership` by the deployer, then `acceptOwnership` by the timelock, which for a timelock is itself a scheduled operation; it executed on 2026-09-22. From that point every owner action passes through the 48-hour delay. `get_governance_state` in the MCP server and `owner()` and `pendingOwner()` on the vault report the state.
 
 Every parameter is set through `setParam(key, values)` with hard bounds enforced in code:
 

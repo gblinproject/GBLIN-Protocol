@@ -73,7 +73,7 @@ Each conditional order uses `GblinAuctionOrder` as handler, the row index as sal
 | Pending owner | none |
 | Acceptance | operation `0x1873b690cb95ce706938a223da20047db73a49e7b1ab23021665e5b6502a9c27` on the timelock, executed on 2026-09-22 at 21:01 UTC in transaction `0x366dc55dfe1fc3a1eb662a245ed7f5e6b54c68a0621124eafe5cf14188a2503c` (block 51660727) |
 
-The `SequencerSentinel` is owned by the same timelock and has no pending owner; its acceptance, operation `0x10f3299fd0a5313a3146f4577946b599fb1f25a304c428e5e1c57a51fe17a4b7`, executed in transaction `0xe4f4842a682ff3d9b89b10cbc0de878ed01893aefa88d21228fe6700b17df165` (block 51660741). The sentinel's guardian is `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA`, which also holds the canceller role on the timelock.
+The `SequencerSentinel` is owned by the same timelock and has no pending owner; its acceptance, operation `0x10f3299fd0a5313a3146f4577946b599fb1f25a304c428e5e1c57a51fe17a4b7`, executed in transaction `0xe4f4842a682ff3d9b89b10cbc0de878ed01893aefa88d21228fe6700b17df165` (block 51660741). The sentinel's guardian is `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA`; it holds no role on the timelock.
 
 ## Timelock
 
@@ -83,8 +83,9 @@ The `SequencerSentinel` is owned by the same timelock and has no pending owner; 
 | Minimum delay | 172,800 s (48 hours), immutable |
 | Grace period | 14 days |
 | Executor | open (any address) |
-| Proposer | `0x9FFa542E369C53af62380296092EC669f329a9ee` |
-| Canceller | `0x30590c0D05c26562d7296CE3D927d3418d2e6dcA` |
+| Proposer | `0xc7AeFcfC871bA51FA2ddfE3117b69AC055C98eF1` (Safe, threshold 2 of 3) |
+| Canceller | `0xc7AeFcfC871bA51FA2ddfE3117b69AC055C98eF1` (Safe, threshold 2 of 3) |
+| Role change | Operation `0x85687edf57158c201408df5e2c090a6e268043100e2f26f6bf3494c9fffdeb9d`, executed in transaction `0x4acc212535d068bffee07e7539981ed3e23d227dc0a3ceac6b3e4fe294724fbc` on 2026-10-07 |
 
 ## Previous deployments
 
