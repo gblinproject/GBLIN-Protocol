@@ -177,7 +177,7 @@ These hold by construction and are exercised by the test campaigns described in 
 
 ## 13. Security
 
-Audited by [Soken](https://soken.dev) on 9 October 2026 at commit `311bd91`: 0 critical, 0 high, 0 medium, 2 low, 14 informational; all seven deployed contracts match the audited build byte for byte. Report and status of every finding: [`audits/README.md`](audits/README.md). The code was also reviewed line by line by the maintainer, Roberto Parise, and by three AI systems — Fable 5.1, Grok 4 (Expert) and ChatGPT (Thinking) — with reproducible reading tests; the campaigns of unit, fuzz, invariant, fork, mutation and symbolic testing are summarized in the same file, together with what was not done.
+This release has had no paid third-party audit. It was reviewed line by line by the maintainer, Roberto Parise, and by three AI systems — Fable 5.1, Grok 4 (Expert) and ChatGPT (Thinking) — with reproducible reading tests; the campaigns of unit, fuzz, invariant, fork, mutation and symbolic testing are summarized in [`audits/README.md`](audits/README.md), together with what was not done. The first use of protocol revenue will be a full audit by an established firm.
 
 Reports of vulnerabilities: [`SECURITY.md`](SECURITY.md). Findings reported so far and their status: [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md).
 

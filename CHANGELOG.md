@@ -5,13 +5,6 @@ All notable changes to the GBLIN Protocol will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Audit] — 2026-10-09
-
-### Added
-- External audit by Soken of commit `311bd91` and of the seven contracts in production on Base: 0 critical,
-  0 high, 0 medium, 2 low, 14 informational. Report in `audits/2026-10-09_soken_security_review.pdf`, status of
-  every finding in `audits/README.md`. No contract changed.
-
 ## [Fill agent] — 2026-09-21
 
 `GblinAuctionOrder` `0x156Ffd19819e02d9809cED8fa1416EDCD31ddaB9` and `CowFillAgent` `0x0f4307A5Eb7D33d04Cb68fb0bA4d47a56C7E2fc8` deployed on Base, and the agent set as the vault's
