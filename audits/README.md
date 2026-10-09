@@ -6,7 +6,7 @@ This directory records what has been done to check the GBLIN contracts, and what
 
 | Stage | Vault in service (`0xc2181d97…1D53`) | Previous contract (`0x36C81d7E…52f0`) |
 |---|---|---|
-| Public source verification | Sourcify full match and Basescan | Basescan |
+| Public source verification | Sourcify (match) and Basescan | Basescan |
 | Line-by-line review | The maintainer, and three AI systems with reproducible reading tests (below) | The maintainer |
 | Static analysis | Slither and Aderyn; every reported item read individually, none accepted as a defect | Slither: [report](./2026-06-28_slither_GBLIN_V6.md), 0 critical / 0 high |
 | Unit and fuzz tests | 591 tests in the internal suite, the 57 of the fill agent below included; fuzzing at 20,000 runs | — |
@@ -27,7 +27,7 @@ The unit, fuzz, invariant and fork suites are internal and not published in this
 
 | Stage | Result |
 |---|---|
-| Public source verification | Sourcify full match and Basescan, both contracts |
+| Public source verification | Sourcify (match) and Basescan, both contracts |
 | Unit and fuzz tests | 57 tests, fuzzing at 20,000 runs. 21 on the fill path against a settlement and a `ComposableCoW` that follow the deployed contracts step by step: fill at the auction size and price, surplus to the vault, partial fills, both sides, every rejection code of `verify`, a half-done swap that locks the vault, the emergency close, a token that refuses the return. 20 on the order generator called the way CoW Protocol's watch-tower calls it: the order cut on both sides equal to `bid` in size and price, including when the vault's WETH limits it, and every polling signal. 11 on the agent alone against a stand-in vault, branch by branch: opening, registration and removal by the owner only, swap-in-progress, returned values and events of both closes, a token that answers `false`. 5 on the bucket arithmetic: exact values along the curve and two fuzz properties |
 | Invariant tests | The vault's 13 invariants, 1,000,000 operations each, with solver fills among the operations |
 | Fork tests against the live contracts | 6 tests on Base with CoW Protocol's settlement and `ComposableCoW`: fills at market, a price below the auction refused by the real settlement, a half-done settlement that cannot touch the vault, no signature without an auction, the whole gap closed by successive settlements, and the order and signature produced by `ComposableCoW` itself accepted by the settlement, including an order cut at the start of a bucket and settled at its end |

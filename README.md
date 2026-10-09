@@ -42,7 +42,7 @@ GBLIN is built and maintained by Roberto Parise.
 | `GblinAuctionOrder` (auction order generator) | [`0x156Ffd19819e02d9809cED8fa1416EDCD31ddaB9`](https://basescan.org/address/0x156Ffd19819e02d9809cED8fa1416EDCD31ddaB9) |
 | Timelock (owner-elect) | [`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`](https://basescan.org/address/0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd) |
 
-Network: Base mainnet (chain id 8453). Compiler: Solidity 0.8.37, `via_ir`, optimizer runs 1, EVM `cancun`, no CBOR metadata. Sources verified on Sourcify (full match) and Basescan. Creation transactions, launch parameters and previous deployments: [`docs/deployments.md`](docs/deployments.md).
+Network: Base mainnet (chain id 8453). Compiler: Solidity 0.8.37, `via_ir`, optimizer runs 1, EVM `cancun`, no CBOR metadata. Sources verified on Sourcify (match: the build embeds no metadata hash, so Sourcify cannot report an exact match) and Basescan. Creation transactions, launch parameters and previous deployments: [`docs/deployments.md`](docs/deployments.md).
 
 Token: name `Global Balanced Liquidity Index`, symbol `GBLIN`, 18 decimals. Basket at launch: cbBTC 45%, WETH 45%, USDC 10%.
 
