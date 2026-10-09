@@ -1,6 +1,39 @@
-# Security reviews and test campaigns
+# Audits, reviews and test campaigns
 
 This directory records what has been done to check the GBLIN contracts, and what has not.
+
+## External audit
+
+| Auditor | Date | Commit | Scope | Findings | Report |
+|---|---|---|---|---|---|
+| [Soken](https://soken.dev) | 9 October 2026 | `311bd91` | The seven contracts in production on Base (vault, Lens, Zap, sequencer sentinel, Uniswap V3 adapter, fill agent, order generator), three libraries and one type: 2,103 source lines | 0 critical, 0 high, 0 medium, 2 low, 14 informational | [PDF](./2026-10-09_soken_security_review.pdf) |
+
+Soken read every file in scope line by line, checked 112 statements from the README, the documentation and the NatSpec against the code and the chain, ran the internal suite (586 tests passed, 0 failed, on a Base fork), wrote 84 tests of its own (70 unit, 7 fuzz, 7 invariant campaigns) and compiled `311bd91` to compare it with the deployed contracts: all seven match byte for byte, immutables aside. The timelock that owns the vault was read to describe governance but was outside the scope of testing; off-chain components and the front end were out of scope.
+
+SHA-256 of the report: `e3096c408b50dacd78368bf1810882cdc26583c0c34e2113e59131f8ea404da4`.
+
+| ID | Finding | Severity | Status |
+|---|---|---|---|
+| L-001 | Mints accept prices up to 2 hours old; the documentation said 30 minutes | Low | Documentation corrected: the 30-minute window applies to auction fills, mints use the pricing age. Lowering the pricing age through the timelock is under evaluation |
+| L-002 | A delisted row can be abandoned after 26 hours of feed silence; the documentation said seven days | Low | Documentation corrected to state the rule the code applies; a check on the feed's own age is noted for a next deployment |
+| I-001 | `verify()` leaves `kind` and `partiallyFillable` unchecked | Informational | Acknowledged; for a next deployment |
+| I-002 | Zap exit to ETH sells each leg with `amountOutMinimum = 1` | Informational | Documentation corrected |
+| I-003 | Launch configuration differs from the code defaults | Informational | Launch transactions listed in `docs/deployments.md` |
+| I-004 | Lens views can answer where the vault would revert | Informational | Acknowledged |
+| I-005 | Crash shield events are not declared in `IGBLIN` | Informational | Acknowledged; for a next deployment |
+| I-006 | `OracleLib` feed reads are not gas-capped | Informational | Acknowledged; no change required for Chainlink feeds |
+| I-007 | Views return intermediate values during the bid callback | Informational | Acknowledged; `GBLINLens.reentrancyLocked` exposes the state |
+| I-008 | Order generator duplicates vault constants and reads decimals from the token | Informational | Acknowledged |
+| I-009 | Relayer allowance stays until the fill is closed | Informational | No change required |
+| I-010 | README omitted the lower bound of the shield base threshold | Informational | Documentation corrected |
+| I-011 | `SequencerSentinel` implements a subset of the aggregator interface | Informational | Acknowledged |
+| I-012 | Two small gas items | Informational | Acknowledged; for a next deployment |
+| I-013 | README gave the shield threshold range as 15% to 50% | Informational | Documentation corrected: the threshold never exceeds the full-slash drawdown |
+| I-014 | README said the shield refreshes on every redemption | Informational | Documentation corrected |
+
+The deployed contracts cannot be changed in place; findings marked for a next deployment apply only to a new release.
+
+## Internal reviews and test campaigns
 
 ## Status
 
@@ -16,7 +49,7 @@ This directory records what has been done to check the GBLIN contracts, and what
 | Mutation testing (slither-mutate), `GBLIN` and the first fill agent | Partial, stopped at a time cap: 261 mutants caught, 6 not caught by the suite frozen at the start of the campaign, 349 not compiling. The six have since been settled (below) | — |
 | Symbolic execution (Halmos) | 12 properties: 3 proved, 9 undecided within the solver budget, 0 counterexamples | — |
 | Scale simulation on a fork | 10 scales from 10 dollars to 10 billion: every exit paid within 7 bps of NAV up to 100,000 dollars; from 100 million a 10-million exit is refused whole and the shares stay with the holder | — |
-| Paid third-party audit | none | none |
+| External audit | Soken, 9 October 2026: 0 critical, 0 high, 0 medium, 2 low, 14 informational ([report](./2026-10-09_soken_security_review.pdf)) | none |
 | Formal verification | none | none |
 
 The unit, fuzz, invariant and fork suites are internal and not published in this repository yet.
@@ -61,9 +94,9 @@ Each reviewer received a numbered listing of the sources, a closed perimeter of 
 
 "Undecided" in the Halmos row means what it says: the properties were neither proved false nor proved true within the solver's time budget.
 
-## What this is not
+## Limits
 
-None of the above is an audit in the sense the word is used by audit firms, and the protocol does not describe itself as audited. The reviews were made by the people who wrote the code and by tools that can be wrong. The bounds that hold regardless of review are in the code and listed in [`docs/governance.md`](../docs/governance.md). The first use of protocol revenue will be a full audit by an established firm.
+An audit is a point-in-time assessment of the code in scope, not a guarantee that it is free of defects. The Soken audit covers commit `311bd91` and the contracts deployed on Base; the internal campaigns above were run by the people who wrote the code and with tools that can be wrong. Formal verification has not been done. The bounds that hold regardless of review are in the code and listed in [`docs/governance.md`](../docs/governance.md).
 
 ## Reporting
 
