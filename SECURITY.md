@@ -42,8 +42,7 @@ The GBLIN Protocol team takes security issues seriously. We appreciate your effo
 
 **There is no monetary bug bounty at present, and we would rather say so plainly than leave the question
 open.** The protocol holds roughly one thousand dollars of total value and is self-funded; a reward pool
-would have to come out of the same money that pays for an external audit, which we consider the higher
-priority.
+would come out of the same money that pays for its development.
 
 Researchers acting in good faith will:
 
@@ -53,8 +52,8 @@ Researchers acting in good faith will:
 - Have their finding recorded even when we dispute it, with our reasoning published alongside, so that
   disagreements are visible rather than buried in a private thread.
 
-If external funding arrives, a monetary program is the second item it pays for, after an external audit,
-and this section will be updated before any such program is announced anywhere else.
+If external funding arrives, a monetary program is among the first items it pays for, and this section will
+be updated before any such program is announced anywhere else.
 
 ## Out of Scope
 
@@ -66,12 +65,12 @@ and this section will be updated before any such program is announced anywhere e
 
 ## Review status
 
-This release has had no paid third-party audit. It was reviewed line by line by the maintainer, Roberto Parise, and by three
-AI systems — Fable 5.1, Grok 4 (Expert) and ChatGPT (Thinking) — with reproducible reading tests; the
-testing campaigns and their limits are summarized in [`audits/README.md`](audits/README.md). The first use of protocol revenue will be a full audit by an established firm.
-Nothing here should be read as "audited". The fill agent and the
-order generator were added after the launch; the reviews and test campaigns they have been through since
-are listed in the same file.
+The contracts in production were audited by [Soken](https://soken.dev) on 9 October 2026, at commit `311bd91`:
+0 critical, 0 high, 0 medium, 2 low and 14 informational findings, and all seven deployed contracts match
+the audited build byte for byte. The report and the status of every finding are in
+[`audits/README.md`](audits/README.md). Before the audit the code was reviewed line by line by the maintainer,
+Roberto Parise, and by three AI systems — Fable 5.1, Grok 4 (Expert) and ChatGPT (Thinking) — with
+reproducible reading tests; those reviews and the internal test campaigns are listed in the same file.
 
 ## Supported Versions
 
