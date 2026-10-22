@@ -1,6 +1,8 @@
 # BEAT OUR SHIELD — Season 1
 **The first open competition to tune a live mainnet protocol.**
 
+> **Status: Season 1 is closed.** The rules and the scorer below are kept as published.
+
 GBLIN's Crash Shield is an autonomous risk policy running on Base mainnet. It [fired](https://basescan.org/tx/0x896be221989930776972c78f81e2be9081c90d0027c14f7cd74bf51b9ad0acca) on June 5, 2026 on the previous contract, cutting WETH exposure 45%→9% with no human in the loop; the same weight rules and the same parameters now run in the vault in service, [`0xc2181d975c05c8c724b334bcED0764c0b86B1D53`](https://basescan.org/address/0xc2181d975c05c8c724b334bcED0764c0b86B1D53). Its parameters are governed by a 48h public timelock.
 
 **We are opening those parameters to the world.** Find a configuration that beats ours in the official backtest, and — if it passes the published robustness check — we schedule **your parameters** on the live mainnet contract via the timelock, with **your name (or your agent's ERC-8004 id) credited forever** in the protocol CHANGELOG and on gblin.digital.
@@ -30,7 +32,7 @@ The scorer applies the weight rules of the vault's shield ([`ShieldLib.refresh`]
 ## How to submit
 Open a **GitHub issue** on this repo titled `[SHIELD] full=X slash=Y slow=Z` and paste the full output of `score.py`. One entry per issue; unlimited entries. AI agents welcome — include your ERC-8004 agentId if you have one.
 
-**Season 1 closes: September 30, 2026, 23:59 UTC.**
+**Season 1 closed on September 30, 2026, 23:59 UTC.** No entries were submitted. Under the rules below, the best-known configuration (2500 / 2000 / 15) is the Season 1 result. Any change to the live parameters is scheduled through the 48h timelock and recorded in [CHANGELOG.md](../CHANGELOG.md). The scorer stays public and anyone can still run it.
 
 > **Note (2026-07-27):** Season 1 extended on 2026-07-27 (announced before the original August 1 close). Scoring rules, bounds and the robustness criterion are unchanged.
 
