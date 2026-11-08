@@ -7,14 +7,14 @@ stands. It exists so that researchers can see what has already been reported bef
 Findings are listed whether or not we agreed with the reporter's severity. Where a reporter corrected us,
 that is recorded too.
 
-**Contract status.** The findings below were reported against the previous contract
-(`0x36C81d7E1966310F305eA637e761Cf77F90852f0`). No deployed contract is upgradeable — there is no proxy, and code
+**Contract status.** Findings 1 to 6 were reported against the previous contract
+(`0x36C81d7E1966310F305eA637e761Cf77F90852f0`); finding 7 was reported against the vault in service. No deployed contract is upgradeable — there is no proxy, and code
 cannot be changed in place — so a code-level fix means a new deployment, while a parameter-level mitigation can be
 applied on a live deployment through the 48h timelock (`0x6aBeC8716fFeEcf7C3D6e68255b4797113E8e5Dd`). The vault in
 service is `0xc2181d975c05c8c724b334bcED0764c0b86B1D53`; the status of each finding on it is in the section
 "Status on the vault in service" at the end.
 
-Last updated: 2026-10-05.
+Last updated: 2026-11-08.
 
 ---
 
@@ -28,6 +28,7 @@ Last updated: 2026-10-05.
 | 4 | 2026-07-29 | Crash Shield redistributes slashed weight onto already-shielded assets | Medium | Counting logic confirmed; **our first impact assessment was wrong and the reporter corrected it**. Closed in the vault in service |
 | 5 | 2026-07-31 | Missing slippage floor in `sellGBLINForEth` when a feed is unusable | Low | Reproduced in full; closed in the vault in service |
 | 6 | 2026-08-02 | The 20s sell cooldown is bypassed by minting and redeeming from two addresses | Found internally | Demonstrated, 6/6 tests; the round trip is not profitable on its own. Reduced in the vault in service |
+| 7 | 2026-11-07 | The auction premium cap exceeds the cost of a mint | Critical | Reproduced; intended at the current vault size. The cap will be lowered through the timelock as the vault grows |
 
 ---
 
@@ -196,9 +197,40 @@ does not depend on identity.
 
 ---
 
+## 7 — The auction premium cap exceeds the cost of a mint
+
+**Reported by Nguyen Ba Khanh, 2026-11-07, against the vault in service.**
+
+The rebalancing auction opens when the vault drifts more than 700 bps from its target weights and closes
+only when the drift falls back below 175 bps. While it is open, the premium paid to the filler ramps from
+-100 bps to `auctionCapBps` over 3,600 seconds and then holds at the cap, which is 25 bps. A mint with WETH
+costs 10 bps (5 bps protocol fee and 5 bps stability fee), and an in-kind redemption costs nothing.
+
+A participant can therefore repeat a cycle while the auction stays open: mint with WETH to a separate
+receiver, fill the deficit this creates through `bid` at the capped premium, and redeem in kind, keeping
+the drift above the close band. Each cycle captures the difference between the premium and the mint cost.
+The separate receiver is the path described in item 6.
+
+**Reproduced** with our own harness on a Base fork at block 53,552,785, independently of the reporter's
+proof of concept. Our gross figures agree with the reporter's within 0.6%: 500 cycles extract 0.0078 ETH,
+about 2.0% of the vault's value at that block. After execution costs at current Base gas prices, the net
+result for the participant is positive but small, between about 0.002 and 0.005 ETH over 500 cycles.
+
+**Our position: intended at the current vault size.** The cap is set at 25 bps on purpose. While the vault
+is small, its rebalancing trades are small, and a premium above the cost of a mint is what makes it
+worthwhile for agents and solvers to open and fill auctions at all. The value described above is the cost
+of that incentive.
+
+As the vault grows, we will lower `auctionCapBps` in steps through the 48h timelock, down to 9 bps. With the
+cap at 9 bps, the same strategy on the same fork is loss-making for the participant (-0.0053 ETH over 100
+cycles and -0.026 ETH over 500 cycles, before gas), and the difference stays in the vault: holders do not
+lose value.
+
+---
+
 ## Status on the vault in service
 
-The findings above were reported against the previous contract. On the vault in service
+Findings 1 to 6 were reported against the previous contract. On the vault in service
 (`0xc2181d975c05c8c724b334bcED0764c0b86B1D53`):
 
 | # | Status |
@@ -209,6 +241,7 @@ The findings above were reported against the previous contract. On the vault in 
 | 4 | Closed: slashed weight goes only to stable rows that are at their peg and not shielded themselves. |
 | 5 | Closed by design: the exit to ETH is all or nothing in the Zap. Each leg is sold under the adapter's TWAP band, which compares the pool's current price with its own time-weighted average, and the price bound applies to the whole exit: the caller's minimum and, while the vault can price itself, the NAV value of the shares less the Zap's slippage bound. |
 | 6 | Reduced, and documented: the cooldown is written only for a minter who receives its own shares, so a deposit on someone's behalf cannot lock their exit; a transfer still bypasses it. Propagating the cooldown on transfers would let anyone close another holder's exit for the price of a dust mint, so it is not done. The remaining round trip costs the attacker the mint fees. |
+| 7 | Open by design: `auctionCapBps` is 25 bps and will be lowered in steps through the timelock, down to 9 bps, as the vault grows. |
 
 ## Reporting something not on this list
 
